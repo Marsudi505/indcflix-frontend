@@ -1,0 +1,35 @@
+/* =============================================
+   IndcHub - style.css
+   ============================================= */
+
+/* Scrollbar custom */
+::-webkit-scrollbar {
+    width: 6px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+.dark ::-webkit-scrollbar-thumb {
+    background: #475569;
+}
+
+/* Tab styling */
+.tab-active {
+    background-color: #2563eb;
+    color: #ffffff;
+    border-color: #3b82f6;
+}
+.tab-inactive {
+    background-color: #f8fafc;
+    color: #64748b;
+    border-color: #e2e8f0;
+}
+.dark .tab-inactive {
+    background-color: #1e293b;
+    color: #94a3b8;
+    border-color: #334155;
+}

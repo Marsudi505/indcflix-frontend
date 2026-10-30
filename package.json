@@ -1,0 +1,8 @@
+{
+  name: indcflix-frontend,
+  version: 2.0.0,
+  description: IndcHub Frontend Static Web App for Vercel,
+  scripts: {
+    build: echo Static build ready
+  }
+}
