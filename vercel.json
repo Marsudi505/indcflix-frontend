@@ -1,11 +1,11 @@
 {
-  version: 2,
-  public: true,
-  cleanUrls: true,
-  rewrites: [
+  "version": 2,
+  "public": true,
+  "cleanUrls": true,
+  "rewrites": [
     {
-      source: /api/:path*,
-      destination: https://klikidm.my.id/api/:path*
+      "source": "/api/:path*",
+      "destination": "https://klikidm.my.id/api/:path*"
     }
   ]
 }
