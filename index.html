@@ -3,1778 +3,321 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IndcHub</title>
+    <title>IndcHub - Cari Toko & Cari Barang</title>
 
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#ff9000">
-    <meta name="description" content="Aplikasi checkout, generator QR/barcode & tool internal Indomaret">
+    <meta name="description" content="Pencarian Toko & Planogram Rak Barang Indomaret - Bebas Akses Tanpa Login">
     <link rel="icon" type="image/png" href="/icons/icon-192.png">
     <link rel="apple-touch-icon" href="/icons/icon-192.png">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="IndcHub">
 
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script> 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            orange: "#ff9000",
+                            dark: "#0f0f0f",
+                            card: "#1b1b1b",
+                            border: "#2a2a2a"
+                        }
+                    }
+                }
+            }
+        };
+    </script>
 
-    <script> tailwind.config = { darkMode: 'class' }; </script>
-    
+    <!-- Scanner Barcode Library -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+
     <style>
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #ff9000; border-radius: 4px; }
-        .dark ::-webkit-scrollbar-thumb { background: #ff9000; }
-        .tab-active { background-color: #ff9000 !important; color: #000000 !important; border-color: #ffa733 !important; font-weight: 900; }
-        .tab-inactive { background-color: #1b1b1b; color: #adadad; border-color: #2a2a2a; }
-        .dark .tab-inactive { background-color: #1b1b1b; color: #adadad; border-color: #2a2a2a; }
         
-        body { background-color: #000000 !important; background-image: none !important; }
-        .dark body { background-color: #000000 !important; background-image: none !important; }
+        body {
+            background-color: #0b0b0b !important;
+            color: #f1f1f1;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            min-height: 100vh;
+        }
 
-        .fade-in-up { animation: fadeInUp 0.5s ease-out forwards; }
-        @keyframes fadeInUp { 0% { opacity: 0; transform: translateY(15px); } 100% { opacity: 1; transform: translateY(0); } }
+        .ph-logo {
+            font-weight: 900;
+            font-style: italic;
+            letter-spacing: -0.03em;
+        }
+        .ph-logo .hub {
+            background-color: #ff9000;
+            color: #000;
+            padding: 2px 7px;
+            border-radius: 6px;
+            margin-left: 3px;
+            display: inline-block;
+        }
 
-        .toast-enter { animation: toastIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-        .toast-leave { animation: toastOut 0.3s ease-in forwards; }
-        @keyframes toastIn { 0% { opacity: 0; transform: translateY(-30px) scale(0.9); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
-        @keyframes toastOut { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-30px) scale(0.9); } }
-        
-        #outGenBarCanvas { max-width: 100%; height: auto; object-fit: contain; }
-        #tsMap { z-index: 1; }
+        .tab-btn-active {
+            background-color: #ff9000 !important;
+            color: #000000 !important;
+            font-weight: 800 !important;
+            box-shadow: 0 4px 14px rgba(255, 144, 0, 0.35);
+        }
 
-        /* ── IndcHub Theme (Pornhub-style) ── */
-        .ph-logo { font-weight: 900; font-style: italic; letter-spacing: -0.02em; white-space: nowrap; }
-        .ph-logo .hub { background-color: #ff9000; color: #000; padding: 0 6px; border-radius: 5px; margin-left: 3px; display: inline-block; }
-        .dark .bg-slate-100, .dark .bg-slate-50 { background-color: #1b1b1b !important; }
-        .dark .border-slate-100, .dark .border-slate-200, .dark .border-slate-300 { border-color: #2a2a2a !important; }
-        .dark .text-slate-800, .dark .text-slate-700 { color: #f1f1f1 !important; }
-        .dark .text-slate-500, .dark .text-slate-400 { color: #adadad !important; }
-        .dark .hover\:bg-slate-100:hover, .dark .hover\:bg-slate-50:hover { background-color: #262626 !important; }
+        .tab-btn-inactive {
+            background-color: #1a1a1a;
+            color: #888888;
+            font-weight: 600;
+        }
+        .tab-btn-inactive:hover {
+            background-color: #262626;
+            color: #ffffff;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.25s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .toast-enter { animation: toastIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .toast-leave { animation: toastOut 0.2s ease-in forwards; }
+        @keyframes toastIn { 0% { opacity: 0; transform: translateY(-20px) scale(0.95); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
+        @keyframes toastOut { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-20px) scale(0.95); } }
     </style>
 </head>
-<body class="text-slate-800 dark:text-slate-300 font-sans min-h-screen flex flex-col items-center transition-colors duration-300">
+<body class="flex flex-col items-center p-3 sm:p-5">
 
+    <!-- Container Notifikasi Toast -->
     <div id="toastContainer" class="fixed top-4 left-0 right-0 z-[100] flex flex-col items-center space-y-2 pointer-events-none px-4"></div>
-    <audio id="soundSuccess" src="https://upload.wikimedia.org/wikipedia/commons/3/34/Sound_Effect_-_Positive_Bell.ogg" preload="auto"></audio>
-    
-    <a href="https://wa.me/628553056669" target="_blank" class="fixed bottom-6 right-6 bg-[#25D366] text-white p-3.5 rounded-full shadow-2xl shadow-green-500/30 hover:scale-110 transition-transform z-50 flex items-center justify-center">
-        <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 21.05c-1.68-.01-3.32-.46-4.79-1.29l-5.32 1.39 1.42-5.19c-.91-1.52-1.4-3.26-1.4-5.04 0-5.52 4.48-10.01 10.01-10.01s10.01 4.49 10.01 10.01-4.49 10.01-9.93 10.13zm5.7-7.27c-.31-.16-1.85-.91-2.14-1.02-.28-.1-.49-.16-.7.16-.21.31-.81 1.02-.99 1.23-.19.21-.37.24-.68.08-.31-.16-1.32-.49-2.52-1.56-.93-.82-1.56-1.83-1.74-2.14-.19-.31-.02-.48.14-.63.14-.14.31-.37.47-.56.16-.19.21-.31.31-.53.1-.21.05-.4-.03-.56-.08-.16-.7-1.68-.96-2.31-.25-.6-.5-.52-.7-.52h-.59c-.21 0-.56.08-.85.4-.28.31-1.09 1.07-1.09 2.61s1.12 3.03 1.28 3.24c.16.21 2.21 3.37 5.35 4.73 2.1.91 2.85 1.01 3.9 1.01 1.06 0 3.39-1.38 3.87-2.72.47-1.34.47-2.48.33-2.72-.14-.24-.49-.39-.8-.55z"/></svg>
-    </a>
 
-    <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-40 hidden transition-opacity"></div>
-    <div id="sidebar" class="fixed inset-y-0 left-0 w-64 bg-white dark:bg-[#1b1b1b] shadow-2xl transform -translate-x-full transition-transform z-50 flex flex-col">
-        <div class="p-5 border-b border-neutral-800 flex justify-between items-center bg-black">
-            <h2 class="ph-logo text-lg text-white">Indc<span class="hub">Hub</span></h2>
-            <button onclick="toggleSidebar()" class="text-white hover:text-orange-500 font-bold text-xl">×</button>
-        </div>
-        <div class="p-4 space-y-3 flex-1">
-            <button onclick="switchMode('home')" class="w-full text-left px-4 py-3 bg-slate-100 dark:bg-slate-800 rounded-lg font-bold hover:bg-orange-100 dark:hover:bg-orange-900/30 transition text-sm shadow-sm border border-transparent hover:border-orange-300"> Halaman Utama</button>
-            <button onclick="switchMode('dashboard')" class="w-full text-left px-4 py-3 bg-slate-100 dark:bg-slate-800 rounded-lg font-bold hover:bg-orange-100 dark:hover:bg-orange-900/30 transition text-sm shadow-sm border border-transparent hover:border-orange-300"> Checkout Menu</button>
-            <button onclick="switchMode('search')" class="w-full text-left px-4 py-3 bg-orange-100 dark:bg-neutral-900/30 text-orange-700 dark:text-orange-400 rounded-lg font-bold hover:bg-orange-200 transition text-sm shadow-sm border border-transparent hover:border-orange-300"> Cari Barang</button>
-            <button onclick="switchMode('toko')" class="w-full text-left px-4 py-3 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-lg font-bold hover:bg-emerald-200 transition text-sm shadow-sm border border-transparent hover:border-emerald-300"> Cari Toko</button>
-            <button onclick="switchMode('generator')" class="w-full text-left px-4 py-3 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-lg font-bold hover:bg-orange-200 transition text-sm shadow-sm border border-transparent hover:border-orange-300"> Buat QR/Barcode</button>
-            <button onclick="switchMode('timestamp')" class="w-full text-left px-4 py-3 bg-orange-100 dark:bg-neutral-900/30 text-orange-700 dark:text-orange-400 rounded-lg font-bold hover:bg-orange-200 transition text-sm shadow-sm border border-transparent hover:border-orange-300"> Buat Timestamp</button>
-            <button id="btnMenuAdmin" onclick="switchMode('admin')" class="w-full text-left px-4 py-3 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-lg font-bold hover:bg-amber-200 transition text-sm hidden shadow-sm mt-4 border-t border-slate-200 dark:border-slate-700 pt-4"> Admin Panel</button>
-            <button id="btnMenuGitdata" onclick="switchMode('gitdata')" class="w-full text-left px-4 py-3 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-lg font-bold hover:bg-orange-200 transition text-sm hidden shadow-sm mt-2"> Data Master GitHub</button>
-            <button id="btnMenuTg" onclick="switchMode('tg')" class="w-full text-left px-4 py-3 bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-400 rounded-lg font-bold hover:bg-sky-200 transition text-sm hidden shadow-sm mt-2"> Telegram Checkout</button>
-            <button id="btnMenuGrs" onclick="switchMode('grs')" class="w-full text-left px-4 py-3 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-lg font-bold hover:bg-emerald-200 transition text-sm hidden shadow-sm mt-2"> Data GRS</button>
-        </div>
-        <div class="p-4 border-t border-slate-200 dark:border-slate-700">
-            <button onclick="openProfil()" class="w-full flex items-center gap-3 bg-slate-100 dark:bg-slate-800 hover:bg-orange-100 dark:hover:bg-orange-900/30 rounded-lg p-2 mb-2 transition text-left">
-                <img id="sidebarAvatar" src="" onerror="this.style.display='none'" class="hidden w-9 h-9 rounded-full object-cover border-2 border-orange-500">
-                <div id="sidebarAvatarInit" class="w-9 h-9 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-black font-black flex items-center justify-center text-sm">?</div>
-                <div class="min-w-0"><p id="sidebarName" class="text-xs font-black truncate">User</p><p class="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Profil Saya</p></div>
-            </button>
-            <button onclick="logoutUser()" class="w-full bg-slate-800 hover:bg-red-600 text-white font-bold py-2 rounded-lg transition"> Logout Sistem</button>
-        </div>
-    </div>
+    <div class="w-full max-w-xl flex flex-col min-h-screen pb-12">
 
-    <div id="authScreen" class="relative w-full min-h-screen flex items-center justify-center overflow-hidden">
-        <div class="absolute top-10 left-10 w-72 h-72 bg-orange-500 rounded-full mix-blend-screen filter blur-3xl opacity-10 animate-pulse"></div>
-        <div class="absolute bottom-10 right-10 w-72 h-72 bg-orange-600 rounded-full mix-blend-screen filter blur-3xl opacity-10 animate-pulse" style="animation-delay: 2s;"></div>
-        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-orange-500 rounded-full mix-blend-screen filter blur-3xl opacity-5 animate-pulse" style="animation-delay: 4s;"></div>
-
-        <div class="relative z-10 w-full max-w-sm m-auto bg-[#1b1b1b]/90 backdrop-blur-xl rounded-3xl shadow-[0_20px_60px_rgba(255,144,0,0.08)] border border-neutral-800 p-8 space-y-6">
-                <div class="text-center">
-                    <div class="mb-3 transform hover:scale-105 transition duration-500">
-                        <span class="ph-logo text-5xl text-white drop-shadow-[0_0_25px_rgba(255,144,0,0.35)]">Indc<span class="hub" style="padding:2px 12px;border-radius:10px;">Hub</span></span>
-                    </div>
-                </div>
-            <form id="authForm" class="space-y-5">
-                <div><label class="block text-[10px] font-black tracking-widest text-slate-400 mb-1">USERNAME</label><input type="text" id="username" class="w-full bg-slate-50 dark:bg-[#0d0d0d] border border-slate-200 dark:border-slate-700 rounded-lg p-3 outline-none text-slate-800 dark:text-white lowercase focus:border-orange-500 transition" required autocomplete="off"></div>
-                <div><label class="block text-[10px] font-black tracking-widest text-slate-400 mb-1">PASSWORD</label><input type="password" id="password" class="w-full bg-slate-50 dark:bg-[#0d0d0d] border border-slate-200 dark:border-slate-700 rounded-lg p-3 outline-none text-slate-800 dark:text-white focus:border-orange-500 transition" required></div>
-                <button type="submit" id="btnSubmitAuth" class="w-full bg-[#ff9000] hover:bg-[#ffa733] text-black font-black py-3.5 rounded-lg shadow-xl shadow-orange-500/25 transition-all transform hover:-translate-y-1 tracking-wide">MASUK WORKSPACE</button>
-                <p id="authMessage" class="text-xs text-center hidden font-bold"></p>
-            </form>
-            <div class="text-center pt-4 border-t border-slate-200 dark:border-slate-700 mt-4">
-                <p id="toggleText" class="text-xs text-slate-500">Belum memiliki akses? <span onclick="toggleAuthMode()" class="text-orange-500 font-bold cursor-pointer hover:underline">Minta Akses</span></p>
+        <!-- Header Utama -->
+        <header class="w-full bg-[#161616]/90 backdrop-blur-md sticky top-2 z-40 rounded-2xl p-3.5 mb-4 border border-neutral-800 shadow-xl flex flex-col sm:flex-row justify-between items-center gap-3">
+            <div class="flex items-center gap-3">
+                <a href="/" onclick="event.preventDefault(); switchTab(\x27toko\x27);" class="leading-none select-none">
+                    <span class="ph-logo text-2xl text-white">Indc<span class="hub">Hub</span></span>
+                </a>
+                <span class="bg-neutral-800 text-orange-400 border border-neutral-700 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                    Free / Publik
+                </span>
             </div>
-        </div>
-    </div>
 
-    <div id="mainWorkspace" class="w-full max-w-lg hidden flex-col pb-6 min-h-screen relative">
-        <div class="flex justify-between items-center py-2.5 px-3 mb-3 bg-white/70 dark:bg-[#1b1b1b]/70 backdrop-blur-md sticky top-0 z-30 rounded-b-2xl shadow-sm border-b border-slate-200 dark:border-slate-700/50">
-            <div class="flex items-center space-x-3">
-                <button onclick="toggleSidebar()" class="text-2xl p-1 text-slate-700 dark:text-slate-300 hover:text-orange-500 transition transform hover:scale-110">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h7"></path></svg>
+            <!-- Tab Navigation (2 Fungsi Utama Saja) -->
+            <nav class="flex w-full sm:w-auto p-1 bg-neutral-900 rounded-xl border border-neutral-800">
+                <button id="navBtnToko" onclick="switchTab(\x27toko\x27)" class="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-xs transition-all tab-btn-active">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                    <span>Cari Toko</span>
                 </button>
-                <div class="leading-none">
-                    <h1 class="ph-logo text-xl text-white">Indc<span class="hub">Hub</span></h1>
+                <button id="navBtnBarang" onclick="switchTab(\x27barang\x27)" class="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-xs transition-all tab-btn-inactive">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+                    <span>Cari Barang</span>
+                </button>
+            </nav>
+        </header>
+
+        <!-- ========================================== -->
+        <!-- 1. FUNGSI: CARI TOKO                      -->
+        <!-- ========================================== -->
+        <main id="viewToko" class="w-full space-y-4 fade-in">
+            <!-- Box Pencarian Toko -->
+            <div class="bg-[#161616] rounded-2xl p-4 border border-neutral-800 shadow-lg space-y-3">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-xs font-black text-orange-400 uppercase tracking-widest flex items-center gap-2">
+                        <span>Pencarian Toko</span>
+                    </h2>
+                    <span class="text-[11px] text-neutral-400">Database Toko & Radar</span>
+                </div>
+
+                <div class="flex gap-2">
+                    <div class="relative flex-1">
+                        <input type="text" id="inputSearchToko" placeholder="Ketik kode toko, nama, atau alamat..." class="w-full bg-[#0d0d0d] text-white placeholder-neutral-500 px-4 py-3 text-sm outline-none font-semibold rounded-xl border border-neutral-700 focus:border-orange-500 transition shadow-inner" onkeypress="if(event.key === \x27Enter\x27) doSearchToko()">
+                        <button id="btnClearToko" onclick="document.getElementById(\x27inputSearchToko\x27).value=\x27\x27; document.getElementById(\x27inputSearchToko\x27).focus();" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white p-1">
+                            ✕
+                        </button>
+                    </div>
+
+                    <!-- Tombol Cari -->
+                    <button onclick="doSearchToko()" class="bg-[#ff9000] hover:bg-[#ffa733] text-black font-black px-5 rounded-xl shadow-lg transition active:scale-95 text-xs flex items-center justify-center">
+                        CARI
+                    </button>
+
+                    <!-- Tombol Toko Terdekat (GPS) -->
+                    <button onclick="cariTokoTerdekat()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3.5 rounded-xl shadow-lg transition active:scale-95 flex items-center justify-center" title="Cari Toko Terdekat (GPS)">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    </button>
+                </div>
+
+                <div class="flex items-center justify-between text-[11px] text-neutral-400 pt-1">
+                    <p class="truncate">Contoh: <button onclick="quickSearchToko(\x27salemba\x27)" class="text-orange-400 hover:underline">Salemba</button>, <button onclick="quickSearchToko(\x27F010\x27)" class="text-orange-400 hover:underline">F010</button>, <button onclick="quickSearchToko(\x27sudirman\x27)" class="text-orange-400 hover:underline">Sudirman</button></p>
+                    <button onclick="cariTokoTerdekat()" class="text-emerald-400 hover:underline font-semibold flex items-center gap-1 shrink-0">
+                        📍 Radar GPS
+                    </button>
                 </div>
             </div>
-            <div class="flex items-center space-x-3">
-                <span class="text-[10px] font-bold text-orange-600 bg-orange-100 border border-orange-200 px-2.5 py-1 rounded-full shadow-sm" id="displayUsername">User</span>
-            </div>
-        </div>
 
-        <div id="areaHome" class="space-y-4 hidden px-3">
-            <div class="bg-gradient-to-br from-neutral-900 via-[#1b1b1b] to-black p-5 rounded-3xl shadow-2xl text-center text-white relative overflow-hidden border border-orange-500/40 shadow-orange-500/10">
-                <div class="absolute -top-10 -right-10 w-32 h-32 bg-orange-500/20 rounded-full blur-2xl"></div>
-                <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-orange-600/10 rounded-full blur-2xl"></div>
-                <div class="relative z-10">
-                    <h2 class="font-black text-xl mb-4 tracking-tight">Selamat Datang di <span class="ph-logo text-white">Indc<span class="hub">Hub</span></span></h2>
-
-                    <div class="grid grid-cols-2 gap-2 text-left">
-                        <a href="javascript:void(0)" onclick="switchMode('dashboard')" class="bg-white/10 hover:bg-orange-500/20 hover:border-orange-500/50 backdrop-blur-sm border border-white/20 p-3 rounded-2xl flex items-center transition shadow-lg group">
-                            <div><h4 class="font-bold text-xs"> Checkout Order</h4></div>
-                        </a>
-                        <a href="javascript:void(0)" onclick="switchMode('search')" class="bg-white/10 hover:bg-orange-500/20 hover:border-orange-500/50 backdrop-blur-sm border border-white/20 p-3 rounded-2xl flex items-center transition shadow-lg group">
-                            <div><h4 class="font-bold text-xs"> Cari Barang (PLU)</h4></div>
-                        </a>
-                        <a href="javascript:void(0)" onclick="switchMode('toko')" class="bg-white/10 hover:bg-orange-500/20 hover:border-orange-500/50 backdrop-blur-sm border border-white/20 p-3 rounded-2xl flex items-center transition shadow-lg group">
-                            <div><h4 class="font-bold text-xs"> Radar Toko</h4></div>
-                        </a>
-                        <a href="javascript:void(0)" onclick="switchMode('generator')" class="bg-white/10 hover:bg-orange-500/20 hover:border-orange-500/50 backdrop-blur-sm border border-white/20 p-3 rounded-2xl flex items-center transition shadow-lg group">
-                            <div><h4 class="font-bold text-xs"> QR & Barcode</h4></div>
-                        </a>
-                        <a href="javascript:void(0)" onclick="switchMode('timestamp')" id="cardTimestamp" class="bg-white/10 hover:bg-orange-500/20 hover:border-orange-500/50 backdrop-blur-sm border border-white/20 p-3 rounded-2xl flex items-center transition shadow-lg group col-span-2">
-                            <div><h4 class="font-bold text-xs"> Buat Timestamp</h4></div>
-                        </a>
-                        <a href="javascript:void(0)" onclick="switchMode('gitdata')" id="cardGitdata" class="hidden bg-white/10 hover:bg-orange-500/20 hover:border-orange-500/50 backdrop-blur-sm border border-white/20 p-3 rounded-2xl flex items-center transition shadow-lg group">
-                            <div><h4 class="font-bold text-xs"> Data Master</h4></div>
-                        </a>
-                        <a href="javascript:void(0)" onclick="switchMode('tg')" id="cardTg" class="hidden bg-white/10 hover:bg-sky-500/20 hover:border-sky-500/50 backdrop-blur-sm border border-white/20 p-3 rounded-2xl flex items-center transition shadow-lg group">
-                            <div class="flex items-center gap-2"><h4 class="font-bold text-xs"> Telegram</h4><span id="cardTgDot" class="w-2 h-2 rounded-full bg-red-500"></span></div>
-                        </a>
-                        <a href="javascript:void(0)" onclick="switchMode('grs')" id="cardGrs" class="hidden bg-white/10 hover:bg-emerald-500/20 hover:border-emerald-500/50 backdrop-blur-sm border border-white/20 p-3 rounded-2xl flex items-center transition shadow-lg group">
-                            <div><h4 class="font-bold text-xs"> Data GRS</h4></div>
-                        </a>
-                    </div>
+            <!-- Hasil Pencarian Toko -->
+            <div id="resultToko" class="space-y-3 pb-6">
+                <div class="text-center py-12 px-4 bg-[#141414] rounded-2xl border border-neutral-800 text-neutral-400">
+                    <p class="text-3xl mb-2">🏪</p>
+                    <p class="text-sm font-semibold">Cari toko Indomaret berdasarkan nama, kode cabang, atau lokasi terdekat Anda.</p>
                 </div>
             </div>
-        </div>
+        </main>
 
-        <div id="areaDashboard" class="space-y-4 hidden px-3">
-            <div class="flex space-x-1 bg-slate-200 dark:bg-slate-800 p-1 rounded-xl shadow-inner">
-                <button onclick="switchTab('order')" id="btnTabOrder" class="flex-1 py-2.5 rounded-lg font-bold text-[11px] tab-active transition-all shadow-md">PESAN</button>
-                <button onclick="switchTab('transaksi')" id="btnTabTransaksi" class="flex-1 py-2.5 rounded-lg font-bold text-[11px] tab-inactive transition-all relative">TRANSAKSI <span id="pingIndicator" class="absolute top-1 right-2 flex h-2.5 w-2.5 hidden"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-50 shadow-lg shadow-emerald-500/50"></span></span></button>
-                <button onclick="switchTab('log')" id="btnTabLog" class="flex-1 py-2.5 rounded-lg font-bold text-[11px] tab-inactive transition-all">RIWAYAT</button>
-            </div>
-            
-            <div id="viewOrder" class="space-y-5 block">
-                <div class="bg-white dark:bg-[#1b1b1b] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-                    <div class="bg-slate-50 dark:bg-slate-800 p-4 border-b border-slate-200 dark:border-slate-700 flex flex-col space-y-3">
-                        <h2 class="font-black text-slate-700 dark:text-slate-200 text-sm flex items-center">Database Nomor WhatsApp</h2>
-                        <div class="flex space-x-2">
-                            <button id="btnSelectUnused" class="bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] px-3 py-1.5 rounded-md font-bold transition shadow">Pilih Baru</button>
-                            <button id="btnSelectUsed" class="bg-amber-500 hover:bg-amber-600 text-white text-[10px] px-3 py-1.5 rounded-md font-bold transition shadow">Pilih Terpakai</button>
-                            <div class="flex-1"></div>
-                            <button id="btnHapusTerpilih" class="bg-red-500 hover:bg-red-600 text-white text-[10px] px-3 py-1.5 rounded-md font-bold transition shadow">Hapus</button>
-                        </div>
-                    </div>
-                    <div class="p-4 space-y-4">
-                        <div id="numberList" class="max-h-48 overflow-y-auto space-y-2 border border-slate-200 dark:border-slate-700 rounded-lg p-2 bg-slate-50 dark:bg-[#0d0d0d] custom-scrollbar"></div>
-                        <textarea id="inputNumbers" rows="2" placeholder="Paste deretan nomor disini (08xxx)..." class="w-full bg-white dark:bg-[#0d0d0d] border border-slate-300 dark:border-slate-600 rounded-lg p-3 text-sm outline-none focus:border-orange-500 transition shadow-inner"></textarea>
-                        <button id="btnSimpanNomor" class="w-full bg-slate-800 dark:bg-orange-600 hover:bg-slate-700 dark:hover:bg-orange-500 text-white font-bold py-3 rounded-lg shadow-lg transition transform hover:-translate-y-0.5">SIMPAN KE DATABASE</button>
-                    </div>
+        <!-- ========================================== -->
+        <!-- 2. FUNGSI: CARI BARANG & PLANOGRAM         -->
+        <!-- ========================================== -->
+        <main id="viewBarang" class="w-full space-y-4 hidden fade-in">
+            <!-- Box Pencarian Barang -->
+            <div class="bg-[#161616] rounded-2xl p-4 border border-neutral-800 shadow-lg space-y-3">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-xs font-black text-orange-400 uppercase tracking-widest flex items-center gap-2">
+                        <span>Pencarian Barang</span>
+                    </h2>
+                    <span class="text-[11px] text-neutral-400">Katalog PLU & Planogram Rak</span>
                 </div>
-                
-                <div class="bg-white dark:bg-[#1b1b1b] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-5 space-y-5 relative overflow-hidden">
-                    <div class="absolute top-0 right-0 w-24 h-24 bg-orange-500/10 rounded-bl-full z-0"></div>
-                    <h2 class="font-black text-slate-700 dark:text-slate-200 text-sm border-b border-slate-100 dark:border-slate-700 pb-2 relative z-10">Eksekusi Checkout</h2>
-                    <div class="grid grid-cols-2 gap-4 relative z-10">
-                        <div><label class="block text-[10px] font-bold text-slate-400 mb-1">KODE TOKO</label><input type="text" id="kodeToko" placeholder="Contoh: F010" class="w-full bg-slate-50 dark:bg-[#0d0d0d] border border-slate-300 dark:border-slate-600 rounded-lg p-2.5 text-sm uppercase outline-none focus:border-orange-500 transition"></div>
-                        <div><label class="block text-[10px] font-bold text-slate-400 mb-1">PLU BARANG : QTY</label><input type="text" id="pluToko" placeholder="200123:1" class="w-full bg-slate-50 dark:bg-[#0d0d0d] border border-slate-300 dark:border-slate-600 rounded-lg p-2.5 text-sm outline-none focus:border-orange-500 transition"></div>
+
+                <div class="flex gap-2">
+                    <div class="relative flex-1">
+                        <input type="text" id="inputSearchProd" placeholder="Ketik nama item, PLU, atau barcode..." class="w-full bg-[#0d0d0d] text-white placeholder-neutral-500 px-4 py-3 text-sm outline-none font-semibold rounded-xl border border-neutral-700 focus:border-orange-500 transition shadow-inner" onkeypress="if(event.key === \x27Enter\x27) doSearchProd()">
                     </div>
-                    <div class="relative z-10">
-                        <label class="block text-[10px] font-bold text-slate-400 mb-1">METODE PEMBAYARAN</label>
-                        <select id="formatMetode" class="w-full bg-slate-50 dark:bg-[#0d0d0d] border border-slate-300 dark:border-slate-600 rounded-lg p-2.5 text-sm outline-none focus:border-orange-500 transition font-bold text-slate-700 dark:text-slate-300">
-                            <option value="GAS.KLIK">1. BCA</option>
-                            <option value="GAS.PP">2. Payment Point</option>
-                            <option value="GAS.FOODKLIK">3. Food BCA</option>
-                            <option value="GAS.FOODPP">4. Food PP</option>
-                        </select>
-                    </div>
-                    <div class="flex space-x-3 mt-2 relative z-10">
-                        <button id="btnPin" class="w-1/3 bg-slate-800 dark:bg-slate-700 text-white font-bold py-3.5 rounded-xl shadow-lg text-[11px] hover:bg-slate-700 transition flex flex-col items-center justify-center leading-none">AMBIL PIN</button>
-                        <button id="btnGas" class="w-2/3 bg-gradient-to-r from-[#ff9000] to-[#ff6a00] hover:from-[#ffa733] hover:to-[#ff7d1f] text-black font-black py-3.5 rounded-xl shadow-xl shadow-orange-500/30 transition-all duration-300 transform hover:-translate-y-1 hover:scale-[1.02] text-lg tracking-wider">GAS KAN!</button>
-                    </div>
+
+                    <!-- Tombol Cari -->
+                    <button onclick="doSearchProd()" class="bg-[#ff9000] hover:bg-[#ffa733] text-black font-black px-5 rounded-xl shadow-lg transition active:scale-95 text-xs flex items-center justify-center">
+                        CARI
+                    </button>
+
+                    <!-- Tombol Kamera Scanner -->
+                    <button onclick="toggleScanner()" class="bg-neutral-800 hover:bg-neutral-700 text-orange-400 border border-neutral-700 font-bold px-3.5 rounded-xl shadow-lg transition active:scale-95 flex items-center justify-center" title="Scan Barcode Kamera">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    </button>
+                </div>
+
+                <div class="flex items-center justify-between text-[11px] text-neutral-400 pt-1">
+                    <p class="truncate">Contoh: <button onclick="quickSearchProd(\x27indomie\x27)" class="text-orange-400 hover:underline">Indomie</button>, <button onclick="quickSearchProd(\x2710000184\x27)" class="text-orange-400 hover:underline">10000184</button>, <button onclick="quickSearchProd(\x27aqua\x27)" class="text-orange-400 hover:underline">Aqua</button></p>
+                    <button onclick="toggleScanner()" class="text-orange-400 hover:underline font-semibold flex items-center gap-1 shrink-0">
+                        📷 Scan Kamera
+                    </button>
                 </div>
             </div>
-            
-            <div id="viewTransaksi" class="hidden bg-white dark:bg-[#1b1b1b] rounded-2xl shadow-xl p-4 border border-slate-200 dark:border-slate-700">
-                <table class="w-full text-sm text-left"><thead class="text-[10px] uppercase font-black text-slate-400 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"><tr><th class="py-3 px-2 rounded-tl-lg">#</th><th class="px-2">Nomor WA</th><th class="px-2">Toko</th><th class="text-center px-2 rounded-tr-lg">Status</th></tr></thead><tbody id="activeTableBody" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody></table>
-            </div>
-            
-            <div id="viewLog" class="hidden bg-white dark:bg-[#1b1b1b] rounded-2xl shadow-xl p-4 border border-slate-200 dark:border-slate-700">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="font-bold text-sm">Riwayat Sukses</h3>
-                    <div class="flex space-x-2">
-                        <button onclick="copyLogTerpilih()" class="bg-orange-100 text-orange-600 hover:bg-orange-200 text-[10px] font-bold px-3 py-1.5 rounded-md transition border border-orange-200"> Copy</button>
-                        <button onclick="bersihkanLogSaya()" class="bg-red-100 text-red-600 hover:bg-red-200 text-[10px] font-bold px-3 py-1.5 rounded-md transition border border-red-200">Bersihkan</button>
-                    </div>
+
+            <!-- Kamera Scanner Container -->
+            <div id="cameraArea" class="hidden bg-neutral-900 p-3 rounded-2xl shadow-2xl border border-neutral-700 relative overflow-hidden">
+                <div class="flex justify-between items-center mb-2 px-1">
+                    <p class="text-[11px] font-black text-orange-400 tracking-wider uppercase">Arahkan Kamera ke Barcode</p>
+                    <button onclick="toggleScanner()" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg text-xs font-bold transition">Tutup Kamera</button>
                 </div>
-                <table class="w-full text-sm text-left">
-                    <thead class="text-[10px] uppercase font-black text-slate-400 border-b border-slate-200 dark:border-slate-700">
-                        <tr>
-                            <th class="py-2"><input type="checkbox" id="cbAllLogs" onclick="toggleAllLogs(this)" class="w-4 h-4 rounded text-orange-600 cursor-pointer"></th>
-                            <th>Nomor WA</th>
-                            <th>Toko</th>
-                            <th class="text-right">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody id="logTableBody" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <div id="areaSearch" class="space-y-4 hidden px-3">
-            <h2 class="text-xs font-black text-orange-500 uppercase tracking-[0.2em] px-1 pt-1"> Cari Barang</h2>
-            <div class="flex space-x-2">
-                        <input type="text" id="inputSearchProd" placeholder="Ketik PLU, Nama, atau Scan..." class="flex-1 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 px-4 py-3 text-sm outline-none font-bold rounded-full shadow-inner border border-slate-300 dark:border-slate-600" onkeypress="if(event.key === 'Enter') doSearchProd()">
-                        <button onclick="toggleScanner()" class="bg-slate-800/80 hover:bg-slate-700 text-white p-2.5 w-12 rounded-full shadow transition flex items-center justify-center border border-white/10"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></button>
-                        <button onclick="doSearchProd()" class="bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-slate-900 p-2.5 w-12 rounded-full shadow-lg transition flex items-center justify-center transform hover:scale-105"><svg class="w-5 h-5 font-bold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></button>
+                <div id="reader" class="w-full rounded-xl overflow-hidden bg-black min-h-[220px]"></div>
             </div>
 
-            <div id="cameraArea" class="hidden bg-slate-900 p-2 rounded-2xl shadow-2xl border border-slate-700 relative overflow-hidden">
-                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 to-orange-500 z-10"></div>
-                <p class="text-center text-[10px] font-black text-slate-300 mb-2 mt-2 tracking-widest uppercase">Arahkan ke Barcode</p>
-                <div id="reader" class="w-full rounded-xl overflow-hidden bg-black"></div>
-                <button onclick="toggleScanner()" class="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-red-500/80 backdrop-blur text-white px-4 py-1.5 rounded-full font-bold text-xs z-10 border border-red-400 shadow-lg">Tutup Kamera</button>
+            <!-- Hasil Pencarian Produk (Grid) -->
+            <div id="resultGrid" class="grid grid-cols-2 gap-3 pb-6">
+                <div class="col-span-2 text-center py-12 px-4 bg-[#141414] rounded-2xl border border-neutral-800 text-neutral-400">
+                    <p class="text-3xl mb-2">📦</p>
+                    <p class="text-sm font-semibold">Cari produk berdasarkan nama, kode PLU, atau barcode untuk melihat planogram rak.</p>
+                </div>
             </div>
+        </main>
 
-            <div id="resultGrid" class="grid grid-cols-2 gap-4">
-            </div>
-        </div>
-
-        <div id="areaDetail" class="space-y-4 hidden px-3 pb-8">
-            <button onclick="closeDetail()" class="flex items-center text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-orange-600 bg-white dark:bg-slate-800 px-4 py-2 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 w-full mb-2">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg> KEMBALI
+        <!-- ========================================== -->
+        <!-- 3. MODAL / VIEW DETAIL PRODUK & PLANOGRAM  -->
+        <!-- ========================================== -->
+        <section id="viewDetail" class="w-full space-y-4 hidden fade-in pb-8">
+            <button onclick="closeDetail()" class="flex items-center justify-between text-xs font-bold text-neutral-300 hover:text-white bg-[#161616] hover:bg-neutral-800 px-4 py-3 rounded-xl border border-neutral-800 transition w-full shadow-md">
+                <span class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
+                    KEMBALI KE HASIL PENCARIAN
+                </span>
+                <span class="text-[10px] text-neutral-500 font-mono">ESC</span>
             </button>
 
-            <div class="bg-white dark:bg-[#1b1b1b] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-                <div class="relative h-60 bg-gradient-to-b from-slate-100 to-white dark:from-slate-800 dark:to-[#0d0d0d] flex justify-center items-center p-6 border-b border-slate-100 dark:border-slate-800">
-                    <img id="modProdImg" src="" class="max-h-full max-w-full object-contain filter drop-shadow-lg" onerror="this.src='https://via.placeholder.com/250?text=Gambar+Offline'">
+            <div class="bg-[#161616] rounded-2xl border border-neutral-800 overflow-hidden shadow-2xl">
+                <!-- Foto Produk -->
+                <div class="relative h-64 bg-[#0d0d0d] flex justify-center items-center p-6 border-b border-neutral-800">
+                    <img id="detailProdImg" src="" alt="Gambar Produk" class="max-h-full max-w-full object-contain filter drop-shadow-2xl transition-transform hover:scale-105 duration-300" onerror="this.src=\x27https://via.placeholder.com/250/161616/ff9000?text=Gambar+Offline\x27">
                 </div>
 
-                <div class="p-5 space-y-6">
-                    <div class="text-center">
-                        <span class="inline-block bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[10px] font-black tracking-widest px-3 py-1 rounded-full mb-2 border border-slate-200 dark:border-slate-700">PLU: <span id="modProdPlu" class="text-slate-800 dark:text-white"></span></span>
-                        <h2 id="modProdName" class="font-black text-xl leading-tight text-slate-800 dark:text-white">Nama Produk</h2>
+                <div class="p-5 space-y-5">
+                    <!-- Judul & PLU -->
+                    <div>
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="bg-neutral-800 text-orange-400 text-[10px] font-mono font-black tracking-widest px-2.5 py-1 rounded-md border border-neutral-700">
+                                PLU: <span id="detailProdPlu" class="text-white"></span>
+                            </span>
+                            <button onclick="salinTeks(document.getElementById(\x27detailProdPlu\x27).innerText)" class="text-neutral-400 hover:text-white text-xs" title="Salin PLU">📋</button>
+                        </div>
+                        <h2 id="detailProdName" class="font-black text-lg text-white leading-snug">Nama Produk</h2>
                     </div>
 
-                    <div class="bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 relative overflow-hidden shadow-inner">
-                        <div class="absolute left-0 top-0 w-1.5 h-full bg-orange-500"></div>
-                        <div class="flex items-center mb-4">
-                            <span class="bg-orange-100 text-orange-600 p-1.5 rounded-lg border border-orange-200 mr-2.5"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M4 3a2 2 0 100 4h12a2 2 0 100-4H4zM4 9a2 2 0 100 4h12a2 2 0 100-4H4zM4 15a2 2 0 100 4h12a2 2 0 100-4H4z"></path></svg></span>
-                            <h3 class="text-sm font-black text-slate-800 dark:text-white tracking-widest uppercase">Peta Planogram Rak</h3>
+                    <!-- Peta Planogram Rak -->
+                    <div class="bg-[#0f0f0f] rounded-2xl border border-neutral-800 p-4 relative overflow-hidden shadow-inner space-y-4">
+                        <div class="flex items-center justify-between border-b border-neutral-800 pb-2">
+                            <div class="flex items-center gap-2">
+                                <span class="bg-orange-500/20 text-orange-400 p-1.5 rounded-lg border border-orange-500/30 text-xs">🗺️</span>
+                                <h3 class="text-xs font-black text-white tracking-widest uppercase">Planogram Lokasi Rak</h3>
+                            </div>
+                            <span class="text-[10px] font-bold text-neutral-500">Tata Letak Toko</span>
                         </div>
                         
-                        <div class="grid grid-cols-3 gap-3">
-                            <div class="bg-white dark:bg-[#0d0d0d] p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-center shadow">
-                                <span class="block text-[10px] font-black text-slate-400 mb-1 tracking-wider">KODE RAK</span>
-                                <span id="txtRak" class="block text-lg font-black text-orange-600 dark:text-orange-400">-</span>
+                        <div class="grid grid-cols-3 gap-2 text-center">
+                            <div class="bg-[#181818] p-3 rounded-xl border border-neutral-800 shadow">
+                                <span class="block text-[9px] font-black text-neutral-400 mb-1 tracking-wider uppercase">KODE RAK</span>
+                                <span id="txtRak" class="block text-xl font-black text-orange-400 font-mono">-</span>
                             </div>
-                            <div class="bg-white dark:bg-[#0d0d0d] p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-center shadow">
-                                <span class="block text-[10px] font-black text-slate-400 mb-1 tracking-wider">SHELVING</span>
-                                <span id="txtShelving" class="block text-lg font-black text-slate-800 dark:text-white">-</span>
+                            <div class="bg-[#181818] p-3 rounded-xl border border-neutral-800 shadow">
+                                <span class="block text-[9px] font-black text-neutral-400 mb-1 tracking-wider uppercase">SHELVING</span>
+                                <span id="txtShelving" class="block text-xl font-black text-white font-mono">-</span>
                             </div>
-                            <div class="bg-white dark:bg-[#0d0d0d] p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-center shadow">
-                                <span class="block text-[10px] font-black text-slate-400 mb-1 tracking-wider">URUTAN</span>
-                                <span id="txtUrutan" class="block text-lg font-black text-slate-800 dark:text-white">-</span>
+                            <div class="bg-[#181818] p-3 rounded-xl border border-neutral-800 shadow">
+                                <span class="block text-[9px] font-black text-neutral-400 mb-1 tracking-wider uppercase">URUTAN</span>
+                                <span id="txtUrutan" class="block text-xl font-black text-white font-mono">-</span>
                             </div>
                         </div>
 
-                        <div class="mt-4 flex items-start bg-red-50 dark:bg-red-900/20 p-3 rounded-xl border border-red-100 dark:border-red-900/50">
+                        <!-- Aturan Retur -->
+                        <div class="bg-red-950/20 border border-red-900/40 p-3 rounded-xl flex items-start gap-2.5">
+                            <span class="text-red-400 text-sm">⚠️</span>
                             <div>
-                                <span class="block text-[10px] font-black text-red-500 tracking-wider mb-0.5">ATURAN RETUR</span>
-                                <span id="txtRetur" class="block text-xs font-bold text-red-700 dark:text-red-400">-</span>
+                                <span class="block text-[9px] font-black text-red-400 tracking-wider uppercase">ATURAN RETUR</span>
+                                <span id="txtRetur" class="block text-xs font-semibold text-neutral-300">-</span>
                             </div>
                         </div>
                     </div>
 
-                    <div class="pt-2 flex flex-col items-center border-t border-slate-200 dark:border-slate-700 mt-4">
-                        <div class="bg-white p-2 mt-4 rounded-xl shadow-inner border border-slate-200">
-                            <img id="modProdBarcodeImg" src="" class="h-14 opacity-90 mix-blend-multiply">
+                    <!-- Barcode Visual & Teks -->
+                    <div class="bg-[#0f0f0f] rounded-2xl border border-neutral-800 p-4 text-center space-y-2">
+                        <span class="text-[9px] font-black text-neutral-400 tracking-wider uppercase block">BARCODE PRODUK</span>
+                        <div class="bg-white p-3 rounded-xl inline-block max-w-full overflow-hidden shadow">
+                            <img id="detailBarcodeImg" src="" alt="Barcode" class="h-14 mix-blend-multiply max-w-full">
                         </div>
-                        <p id="modProdBarcodeTxt" class="text-[11px] font-mono font-bold tracking-[0.2em] text-slate-500 mt-2"></p>
+                        <div class="flex items-center justify-center gap-2">
+                            <p id="detailBarcodeTxt" class="text-xs font-mono font-bold tracking-[0.2em] text-orange-400">-</p>
+                            <button onclick="salinTeks(document.getElementById(\x27detailBarcodeTxt\x27).innerText)" class="text-neutral-400 hover:text-white text-xs" title="Salin Barcode">📋 Salin</button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <div id="areaToko" class="space-y-4 hidden px-3">
-            <h2 class="text-xs font-black text-orange-500 uppercase tracking-[0.2em] px-1 pt-1"> Cari Toko</h2>
-            <div class="flex space-x-2">
-                    <input type="text" id="inputSearchToko" placeholder="Ketik kode toko..." class="flex-1 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 px-4 py-3 text-sm outline-none font-bold rounded-full shadow-inner border border-slate-300 dark:border-slate-600" onkeypress="if(event.key === 'Enter') doSearchToko()">
-                    <button onclick="doSearchToko()" class="bg-[#ff9000] hover:bg-[#ffa733] text-black font-black px-5 rounded-full shadow-lg transition">CARI</button>
-                    <button onclick="cariTokoTerdekat()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-4 rounded-full shadow-lg transition flex items-center justify-center" title="Cari Toko Terdekat">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                    </button>
-            </div>
-            <div id="resultToko" class="space-y-4 pb-4"></div>
-        </div>
+        <!-- Footer Bersih -->
+        <footer class="mt-auto pt-6 pb-2 text-center text-xs text-neutral-500 border-t border-neutral-900">
+            <p><span class="ph-logo text-neutral-300">Indc<span class="hub">Hub</span></span> — Cari Toko & Cari Barang Tanpa Login</p>
+            <p class="text-[10px] text-neutral-600 mt-1">Hosting API: Homehub • Frontend: Vercel Cloud</p>
+        </footer>
 
-        <div id="areaGenerator" class="space-y-4 hidden px-3">
-            <h2 class="text-xs font-black text-orange-500 uppercase tracking-[0.2em] px-1 pt-1"> QR & Barcode Generator</h2>
-
-            <div class="flex space-x-1 bg-slate-200 dark:bg-slate-800 p-1 rounded-xl shadow-inner">
-                <button onclick="setGenMode('qr')" id="btnGenQr" class="flex-1 py-2.5 rounded-lg font-bold text-[11px] tab-active transition-all shadow-md">QR CODE</button>
-                <button onclick="setGenMode('barcode')" id="btnGenBar" class="flex-1 py-2.5 rounded-lg font-bold text-[11px] tab-inactive transition-all">BARCODE</button>
-            </div>
-
-            <div id="panelGenQr" class="bg-white dark:bg-[#1b1b1b] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-5 space-y-4">
-                <div class="flex gap-2">
-                    <button onclick="setGenQrType('url')" id="btnGenQrUrl" class="px-4 py-2 text-xs font-bold rounded-lg bg-orange-100 text-orange-600 border border-orange-200 transition">URL</button>
-                    <button onclick="setGenQrType('text')" id="btnGenQrText" class="px-4 py-2 text-xs font-bold rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700 transition">Teks</button>
-                </div>
-                <div>
-                    <label id="lblGenQr" class="block text-[10px] font-bold text-slate-400 mb-1 tracking-wider uppercase">Masukkan URL</label>
-                    <div class="flex gap-2">
-                        <input type="text" id="inputGenQr" placeholder="https://example.com" class="w-full bg-slate-50 dark:bg-[#0d0d0d] border border-slate-300 dark:border-slate-600 rounded-lg p-2.5 text-sm outline-none focus:border-orange-500 transition" onkeypress="if(event.key==='Enter') actionGenerateQR()">
-                        <button onclick="actionGenerateQR()" class="bg-orange-500 hover:bg-orange-600 text-white font-bold px-4 rounded-lg shadow-lg transition text-sm">BUAT</button>
-                    </div>
-                </div>
-            </div>
-
-            <div id="panelGenBar" class="hidden bg-white dark:bg-[#1b1b1b] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-5 space-y-4">
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-400 mb-1 tracking-wider uppercase">Masukkan 12 Digit Angka</label>
-                    <div class="flex gap-2">
-                        <input type="text" id="inputGenBar" placeholder="Contoh: 590123412345" maxlength="12" class="w-full bg-slate-50 dark:bg-[#0d0d0d] border border-slate-300 dark:border-slate-600 rounded-lg p-2.5 text-sm outline-none focus:border-orange-500 transition font-mono font-bold" oninput="this.value=this.value.replace(/\D/g,'').slice(0,12)" onkeypress="if(event.key==='Enter') actionGenerateBarcode()">
-                        <button onclick="actionGenerateBarcode()" class="bg-orange-500 hover:bg-orange-600 text-white font-bold px-4 rounded-lg shadow-lg transition text-sm">BUAT</button>
-                    </div>
-                </div>
-            </div>
-
-            <div id="panelGenResult" class="hidden flex-col items-center bg-white dark:bg-[#1b1b1b] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-6 relative overflow-hidden">
-                <div class="absolute top-0 w-full h-1 bg-gradient-to-r from-orange-500 to-orange-500"></div>
-                
-                <div id="outGenQrWrapper" class="hidden flex-col items-center w-full">
-                    <div id="outGenQrBox" class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm"></div>
-                    <p id="outGenQrText" class="mt-4 text-[11px] font-mono font-bold text-slate-500 text-center break-all px-4"></p>
-                    <div class="flex gap-3 mt-4 w-full">
-                        <button onclick="downloadQR()" class="flex-1 bg-slate-800 dark:bg-slate-700 text-white text-xs font-bold py-2.5 rounded-lg shadow transition hover:bg-black">Unduh PNG</button>
-                        <button id="btnGenQrCopy" onclick="copyQrContent()" class="flex-1 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs font-bold py-2.5 rounded-lg shadow-sm transition hover:bg-slate-100 dark:hover:bg-slate-800">Salin Teks</button>
-                        <a id="btnGenQrUrl" href="#" target="_blank" class="hidden flex-1 border border-orange-300 text-orange-600 text-xs font-bold py-2.5 rounded-lg shadow-sm transition hover:bg-orange-50 text-center">Buka URL</a>
-                    </div>
-                </div>
-
-                <div id="outGenBarWrapper" class="hidden flex-col items-center w-full">
-                    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm w-full flex justify-center overflow-x-auto">
-                        <canvas id="outGenBarCanvas"></canvas>
-                    </div>
-                    <p id="outGenBarText" class="mt-4 text-sm font-mono font-black text-orange-500 tracking-widest"></p>
-                    <div class="flex gap-3 mt-4 w-full">
-                        <button onclick="downloadBarcode()" class="flex-1 bg-slate-800 dark:bg-slate-700 text-white text-xs font-bold py-2.5 rounded-lg shadow transition hover:bg-black">Unduh PNG</button>
-                        <button onclick="copyBarcode()" class="flex-1 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs font-bold py-2.5 rounded-lg shadow-sm transition hover:bg-slate-100 dark:hover:bg-slate-800">Salin Kode</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="areaTimestamp" class="space-y-4 hidden px-3">
-            <h2 class="text-xs font-black text-orange-500 uppercase tracking-[0.2em] px-1 pt-1"> Timestamp Pro — GPS Overlay</h2>
-
-            <div class="bg-slate-50 dark:bg-[#1b1b1b] border border-slate-200 dark:border-slate-700 rounded-2xl p-8 text-center cursor-pointer transition hover:border-orange-500 shadow-sm" onclick="document.getElementById('tsInputFile').click()">
-                <span id="tsUploadText" class="font-black text-slate-500 dark:text-slate-400"> PILIH FOTO DARI GALERI</span>
-                <input type="file" id="tsInputFile" class="hidden" accept="image/*" onchange="handleTsUpload(this)">
-            </div>
-
-            <div id="tsPreviewArea" class="hidden flex-col gap-4">
-                <canvas id="tsOriginalCanvas" class="w-full h-auto rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm"></canvas>
-                
-                <div class="bg-white dark:bg-[#1b1b1b] p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl space-y-4">
-                    <button id="btnTsGPS" onclick="getTsCurrentLocation()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3.5 rounded-xl shadow-lg transition flex justify-center items-center gap-2 text-[11px] uppercase tracking-wider"> Gunakan GPS Lokasi Saya</button>
-                    
-                    <div id="tsMap" class="h-64 w-full rounded-xl border border-slate-200 dark:border-slate-700 shadow-inner overflow-hidden"></div>
-                    
-                    <div class="space-y-1">
-                        <label class="block text-[10px] font-bold text-slate-400 tracking-wider uppercase">Keterangan Lokasi</label>
-                        <textarea id="tsAddress" rows="4" placeholder="Geser pin di peta atau ketik alamat..." class="w-full bg-slate-50 dark:bg-[#0d0d0d] border border-slate-300 dark:border-slate-600 rounded-lg p-3 text-sm outline-none focus:border-orange-500 transition shadow-inner font-medium resize-y leading-relaxed text-slate-700 dark:text-slate-300"></textarea>
-                    </div>
-
-                    <div class="space-y-1">
-                        <label class="block text-[10px] font-bold text-slate-400 tracking-wider uppercase">Tanggal & Waktu</label>
-                        <input type="datetime-local" id="tsTime" class="w-full bg-slate-50 dark:bg-[#0d0d0d] border border-slate-300 dark:border-slate-600 rounded-lg p-3 text-sm outline-none focus:border-orange-500 transition shadow-inner font-bold text-slate-700 dark:text-slate-300 [color-scheme:light] dark:[color-scheme:dark]">
-                    </div>
-                </div>
-
-                <button id="btnTsDownload" onclick="generateTsImage()" class="w-full bg-[#ff9000] hover:bg-[#ffa733] text-black font-black py-4 rounded-xl shadow-xl transition transform hover:-translate-y-1 text-lg uppercase"> Generate & Download</button>
-            </div>
-            
-            <div id="tsOutputArea" class="hidden text-center mt-4">
-                <p class="text-xs font-bold text-slate-400 mb-2">Preview Hasil Akhir:</p>
-                <canvas id="tsOutputCanvas" class="w-full h-auto rounded-xl border-2 border-orange-500 shadow-2xl"></canvas>
-                <a id="tsDownloadLink" class="hidden"></a>
-            </div>
-        </div>
-
-        <div id="areaAdmin" class="space-y-4 hidden px-3 pb-8">
-            <div class="bg-gradient-to-r from-neutral-900 to-black p-5 rounded-2xl shadow text-white flex justify-between items-center border border-orange-500/30"><h2 class="font-black text-lg tracking-wide">ADMIN <span class="text-orange-500">CENTER</span></h2></div>
-            
-            <div class="bg-white dark:bg-[#1b1b1b] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-4">
-                <h3 class="font-black text-slate-800 dark:text-white mb-3">Menu Control (Global)</h3>
-                <div class="grid grid-cols-2 gap-4" id="adminMenuToggles">
-                </div>
-            </div>
-
-            <div class="bg-white dark:bg-[#1b1b1b] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-4"><h3 class="font-black text-slate-800 dark:text-white mb-3">Manage Access</h3><div class="flex space-x-2 mb-4"><input type="text" id="newUsername" placeholder="Username" class="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-2.5 text-xs rounded-lg outline-none"><input type="text" id="newPassword" placeholder="Password" class="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-2.5 text-xs rounded-lg outline-none"><button onclick="adminAddUser()" class="bg-orange-600 text-white px-4 py-2 rounded-lg text-xs font-bold shadow hover:bg-orange-600 transition">ADD</button></div><div class="overflow-x-auto"><table class="w-full text-left text-xs"><thead class="text-slate-400 border-b dark:border-slate-700"><tr><th class="py-2">User</th><th>Pass</th><th>Akses</th><th>Aksi</th></tr></thead><tbody id="adminUserTable"></tbody></table></div></div>
-            
-            <div class="bg-white dark:bg-[#1b1b1b] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-4">
-                <div class="flex justify-between items-center border-b dark:border-slate-700 pb-3 mb-3">
-                    <h3 class="font-bold text-slate-800 dark:text-white">Sistem Log Terpadu</h3>
-                    <button onclick="loadAdminData()" class="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 text-[10px] rounded-md font-bold transition">Refresh</button>
-                </div>
-                
-                <div class="flex space-x-2 mb-3">
-                    <button onclick="switchAdminTab('transaksi')" id="btnAdminTabTx" class="bg-orange-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm">Log Transaksi</button>
-                    <button onclick="switchAdminTab('kegiatan')" id="btnAdminTabAct" class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm transition border border-slate-200 dark:border-slate-700">Log Kegiatan</button>
-                </div>
-
-                <div id="adminViewTx" class="overflow-x-auto max-h-80 border border-slate-100 dark:border-slate-800 rounded-lg">
-                    <table class="w-full text-left text-[10px]">
-                        <thead class="text-slate-400 border-b dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 sticky top-0"><tr><th class="py-2 pl-2">Waktu</th><th>User</th><th>Nomor</th><th>Toko</th><th>Aksi</th></tr></thead>
-                        <tbody id="adminLogTable" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
-                    </table>
-                </div>
-
-                <div id="adminViewAct" class="overflow-x-auto max-h-80 hidden border border-slate-100 dark:border-slate-800 rounded-lg">
-                    <table class="w-full text-left text-[10px]">
-                        <thead class="text-slate-400 border-b dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 sticky top-0"><tr><th class="py-2 pl-2">Waktu</th><th>User</th><th>Aktivitas</th><th>Detail Input</th></tr></thead>
-                        <tbody id="adminActTable" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
-                    </table>
-                </div>
-
-                <div class="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
-                    <div class="bg-orange-50 dark:bg-orange-900/20 p-2 rounded-xl text-center border border-orange-100 dark:border-orange-800/50 shadow-inner">
-                        <span class="block text-[8px] font-black text-slate-500 uppercase tracking-widest">Total Transaksi</span>
-                        <span id="statTotalTx" class="block text-xl font-black text-orange-600 dark:text-orange-400 mt-1">0</span>
-                    </div>
-                    <div class="bg-emerald-50 dark:bg-emerald-900/20 p-2 rounded-xl text-center border border-emerald-100 dark:border-emerald-800/50 shadow-inner">
-                        <span class="block text-[8px] font-black text-slate-500 uppercase tracking-widest">Total Aktivitas</span>
-                        <span id="statTotalAct" class="block text-xl font-black text-emerald-600 dark:text-emerald-400 mt-1">0</span>
-                    </div>
-                    <div class="bg-amber-50 dark:bg-amber-900/20 p-2 rounded-xl text-center border border-amber-100 dark:border-amber-800/50 shadow-inner">
-                        <span class="block text-[8px] font-black text-slate-500 uppercase tracking-widest">Top User</span>
-                        <span id="statTopUser" class="block text-[10px] leading-tight font-black text-amber-600 dark:text-amber-400 mt-2 break-words truncate px-1">-</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="areaGitdata" class="space-y-4 hidden px-3 pb-8">
-            <h2 class="text-xs font-black text-orange-500 uppercase tracking-[0.2em] px-1 pt-1">Data Master GitHub</h2>
-            <div class="flex space-x-1 bg-slate-200 dark:bg-slate-800 p-1 rounded-xl shadow-inner">
-                <button onclick="gdSetDs('toko')" id="btnGdToko" class="flex-1 py-2.5 rounded-lg font-bold text-[11px] tab-active transition-all shadow-md">DATA TOKO</button>
-                <button onclick="gdSetDs('barcode')" id="btnGdBarcode" class="flex-1 py-2.5 rounded-lg font-bold text-[11px] tab-inactive transition-all">BARCODE</button>
-            </div>
-            <div class="flex space-x-2">
-                <input type="text" id="gdSearch" placeholder="Cari data..." class="flex-1 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 px-4 py-2.5 text-sm outline-none font-bold rounded-full shadow-inner border border-slate-300 dark:border-slate-600" onkeypress="if(event.key === 'Enter') gdLoad(1)">
-                <button onclick="gdLoad(1)" class="bg-[#ff9000] hover:bg-[#ffa733] text-black font-black px-4 rounded-full shadow-lg transition text-xs">CARI</button>
-                <button onclick="gdForm()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-black px-4 rounded-full shadow-lg transition text-xs">TAMBAH</button>
-            </div>
-            <div class="flex justify-between items-center px-1">
-                <p id="gdInfo" class="text-[10px] font-bold text-slate-500"></p>
-                <div class="flex space-x-1">
-                    <button onclick="gdPage(-1)" id="gdPrev" class="bg-slate-200 dark:bg-slate-800 px-3 py-1 rounded-lg text-[10px] font-black disabled:opacity-40">&lt;</button>
-                    <button onclick="gdPage(1)" id="gdNext" class="bg-slate-200 dark:bg-slate-800 px-3 py-1 rounded-lg text-[10px] font-black disabled:opacity-40">&gt;</button>
-                </div>
-            </div>
-            <div id="gdList" class="space-y-2 pb-4"></div>
-        </div>
-
-        <div id="areaTg" class="space-y-4 hidden px-3 pb-8">
-            <h2 class="text-xs font-black text-sky-500 uppercase tracking-[0.2em] px-1 pt-1">Telegram Checkout</h2>
-            <div class="bg-white dark:bg-neutral-900 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-800 p-4 space-y-3">
-                <div class="flex items-center justify-between">
-                    <span class="text-xs font-bold text-slate-500 uppercase tracking-wide">Status Sesi</span>
-                    <span id="tgPill" class="text-[11px] font-black px-3 py-1 rounded-full bg-red-100 text-red-600">MEMUAT...</span>
-                </div>
-                <p class="text-[11px] text-slate-400 leading-relaxed">Hubungkan akun Telegram yang dipakai transaksi dengan bot checkout. Jika sesi error/kadaluarsa, buat sesi baru di sini tanpa lewat terminal.</p>
-                <div class="pt-2 border-t border-dashed border-slate-300 dark:border-slate-700">
-                    <label class="block text-[10px] font-bold text-slate-400 mb-1 uppercase">Bot Tujuan Transaksi</label>
-                    <div class="flex space-x-2">
-                        <input id="tgTargetInput" placeholder="Jh13m_bot" class="flex-1 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-sm outline-none focus:ring-2 ring-sky-400">
-                        <button onclick="tgSaveTarget()" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs transition">Simpan</button>
-                    </div>
-                    <p id="tgTargetInfo" class="text-[10px] text-slate-400 mt-1"></p>
-                </div>
-            </div>
-
-            <div id="tgLoginForm" class="bg-white dark:bg-neutral-900 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-800 p-4 space-y-3">
-                <div class="flex items-center gap-2 text-xs font-bold text-sky-600"><span id="tgStepBadge" class="w-5 h-5 rounded-full bg-sky-600 text-white flex items-center justify-center text-[10px]">1</span> MASUKKAN NOMOR TELEGRAM</div>
-                <input id="tgPhone" type="tel" placeholder="6281234567890" class="w-full px-3 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-sm outline-none focus:ring-2 ring-sky-400">
-                <button onclick="tgSendCode()" class="w-full py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-sm transition">Kirim Kode OTP</button>
-
-                <div id="tgStepCode" class="hidden space-y-2 pt-2 border-t border-dashed border-slate-300 dark:border-slate-700">
-                    <div class="flex items-center gap-2 text-xs font-bold text-sky-600"><span class="w-5 h-5 rounded-full bg-sky-600 text-white flex items-center justify-center text-[10px]">2</span> MASUKKAN KODE OTP</div>
-                    <input id="tgCode" inputmode="numeric" maxlength="6" placeholder="12345" class="w-full px-3 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-sm tracking-[0.4em] text-center outline-none focus:ring-2 ring-sky-400">
-                    <button onclick="tgVerify()" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm transition">Verifikasi Kode</button>
-                </div>
-
-                <div id="tgStepPass" class="hidden space-y-2 pt-2 border-t border-dashed border-slate-300 dark:border-slate-700">
-                    <div class="flex items-center gap-2 text-xs font-bold text-amber-600"><span class="w-5 h-5 rounded-full bg-amber-500 text-white flex items-center justify-center text-[10px]">!</span> PASSWORD 2 LANGKAH</div>
-                    <input id="tgPass" type="password" placeholder="Password Telegram" class="w-full px-3 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-sm outline-none focus:ring-2 ring-amber-400">
-                    <button onclick="tgSubmitPass()" class="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm transition">Kirim Password</button>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-2">
-                <button onclick="tgRefresh()" class="py-2.5 rounded-xl bg-slate-200 dark:bg-slate-800 font-bold text-xs">Cek Status</button>
-                <button onclick="tgLogout()" class="py-2.5 rounded-xl bg-red-100 dark:bg-red-900/40 text-red-600 font-bold text-xs">Putuskan Sesi</button>
-            </div>
-            <div id="tgMsg" class="hidden text-xs font-bold p-3 rounded-xl"></div>
-        </div>
-
-        <div id="areaGrs" class="space-y-4 hidden px-3 pb-8">
-            <h2 class="text-xs font-black text-emerald-500 uppercase tracking-[0.2em] px-1 pt-1">Data GRS — Personil &amp; Toko</h2>
-            <div id="grsStatbar" class="grid grid-cols-2 gap-2"></div>
-            <div class="flex space-x-1 bg-slate-200 dark:bg-slate-800 p-1 rounded-xl shadow-inner">
-                <button onclick="grsTab('nik')" id="btnGrsTabNik" class="flex-1 py-2.5 rounded-lg font-bold text-[11px] tab-active transition-all shadow-md">CARI NIK</button>
-                <button onclick="grsTab('toko')" id="btnGrsTabToko" class="flex-1 py-2.5 rounded-lg font-bold text-[11px] tab-inactive transition-all">CARI KODE TOKO</button>
-            </div>
-            <div id="panelGrsNik" class="space-y-3">
-                <div class="flex space-x-2">
-                    <input id="grsInNik" type="text" inputmode="numeric" maxlength="10" placeholder="Masukkan NIK karyawan" class="flex-1 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 px-4 py-2.5 text-sm outline-none font-bold rounded-full shadow-inner border border-slate-300 dark:border-slate-600" onkeypress="if(event.key === 'Enter') grsDoNik()">
-                    <button onclick="grsDoNik()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-black px-5 rounded-full shadow-lg transition text-xs">CARI</button>
-                </div>
-                <p class="text-[10px] text-slate-500 font-bold px-1">Contoh: 2013127491 - masukkan NIK lalu tekan Cari</p>
-                <div id="resGrsNik" class="space-y-2"></div>
-            </div>
-            <div id="panelGrsToko" class="space-y-3 hidden">
-                <div class="flex space-x-2">
-                    <input id="grsInToko" type="text" maxlength="4" placeholder="Masukkan kode toko (KDTK)" style="text-transform:uppercase" class="flex-1 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 px-4 py-2.5 text-sm outline-none font-bold rounded-full shadow-inner border border-slate-300 dark:border-slate-600" onkeypress="if(event.key === 'Enter') grsDoToko()">
-                    <button onclick="grsDoToko()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-black px-5 rounded-full shadow-lg transition text-xs">CARI</button>
-                </div>
-                <p class="text-[10px] text-slate-500 font-bold px-1">Contoh: TX0B - masukkan kode toko lalu tekan Cari</p>
-                <div id="resGrsToko" class="space-y-2"></div>
-            </div>
-        </div>
-
-        <footer class="mt-auto pt-8 text-center text-[10px] font-black tracking-widest text-neutral-600 pb-6 uppercase">© 2026 <span class="text-orange-500">IndcHub</span>. All rights reserved.</footer>
     </div>
 
-    <div id="modalGd" class="fixed inset-0 bg-slate-900/80 hidden flex justify-center items-center p-4 z-50">
-        <div class="bg-white dark:bg-[#141414] w-full max-w-md rounded-3xl border border-slate-200 dark:border-slate-700 shadow-2xl max-h-[85vh] overflow-y-auto">
-            <div class="sticky top-0 bg-white dark:bg-[#141414] flex justify-between items-center px-5 py-4 border-b border-slate-200 dark:border-slate-700 z-10">
-                <h3 id="gdModalTitle" class="font-black text-sm tracking-wide">TAMBAH DATA</h3>
-                <button onclick="document.getElementById('modalGd').classList.add('hidden')" class="text-slate-400 hover:text-red-500 font-bold text-xl">×</button>
-            </div>
-            <form id="gdFormEl" class="p-5 space-y-3" onsubmit="return gdSaveItem(event)"></form>
-        </div>
-    </div>
-
-    <div id="modalProfil" class="fixed inset-0 bg-slate-900/80 hidden flex justify-center items-center p-4 z-50">
-        <div class="bg-white dark:bg-[#141414] w-full max-w-sm rounded-3xl border border-slate-200 dark:border-slate-700 shadow-2xl max-h-[88vh] overflow-y-auto">
-            <div class="sticky top-0 bg-white dark:bg-[#141414] flex justify-between items-center px-5 py-4 border-b border-slate-200 dark:border-slate-700 z-10">
-                <h3 class="font-black text-sm tracking-wide">PROFIL SAYA</h3>
-                <button onclick="document.getElementById('modalProfil').classList.add('hidden')" class="text-slate-400 hover:text-red-500 font-bold text-xl">×</button>
-            </div>
-            <div class="p-5 space-y-5">
-                <div class="flex flex-col items-center gap-2">
-                    <div class="relative">
-                        <img id="profilAvatar" src="" onerror="this.style.display='none'" class="hidden w-24 h-24 rounded-full object-cover border-4 border-orange-500 shadow-lg">
-                        <div id="profilAvatarInit" class="w-24 h-24 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-black font-black flex items-center justify-center text-3xl shadow-lg">?</div>
-                    </div>
-                    <p id="profilUsername" class="text-xs font-black"></p>
-                    <input type="file" id="fotoInput" accept="image/*" class="hidden" onchange="saveFoto(event)">
-                    <button onclick="document.getElementById('fotoInput').click()" class="bg-slate-100 dark:bg-slate-800 hover:bg-orange-100 dark:hover:bg-orange-900/30 border border-slate-300 dark:border-slate-600 px-4 py-1.5 rounded-full text-[10px] font-black transition">PILIH / GANTI FOTO</button>
-                    <button onclick="hapusFoto()" id="btnHapusFoto" class="hidden text-[9px] font-bold text-red-500 underline">hapus foto</button>
-                </div>
-                <div class="border-t border-dashed border-slate-200 dark:border-slate-700 pt-4 space-y-2">
-                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-wider">Ganti Username</label>
-                    <div class="flex space-x-2">
-                        <input id="pfUsername" placeholder="username baru" class="flex-1 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:border-orange-500">
-                        <button onclick="simpanUsername()" class="bg-[#ff9000] hover:bg-[#ffa733] text-black font-black px-4 rounded-xl text-[10px] transition">SIMPAN</button>
-                    </div>
-                </div>
-                <div class="border-t border-dashed border-slate-200 dark:border-slate-700 pt-4 space-y-2">
-                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-wider">Ganti Password</label>
-                    <input id="pfPassLama" type="password" placeholder="password lama" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:border-orange-500">
-                    <input id="pfPassBaru" type="password" placeholder="password baru (min 3)" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:border-orange-500">
-                    <input id="pfPassUlang" type="password" placeholder="ulangi password baru" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:border-orange-500">
-                    <button onclick="simpanPassword()" class="w-full bg-gradient-to-r from-amber-400 to-orange-500 text-slate-900 font-black py-2.5 rounded-xl shadow-lg transition text-xs">SIMPAN PASSWORD BARU</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="modalGrs" class="fixed inset-0 bg-slate-900/80 hidden flex justify-center items-center p-4 z-50">
-        <div class="bg-white dark:bg-[#141414] w-full max-w-md rounded-3xl border border-slate-200 dark:border-slate-700 shadow-2xl max-h-[85vh] overflow-y-auto">
-            <div class="sticky top-0 bg-white dark:bg-[#141414] flex justify-between items-center px-5 py-4 border-b border-slate-200 dark:border-slate-700 z-10">
-                <h3 id="grsModalTitle" class="font-black text-sm tracking-wide">DETAIL TOKO</h3>
-                <button onclick="document.getElementById('modalGrs').classList.add('hidden')" class="text-slate-400 hover:text-red-500 font-bold text-xl">×</button>
-            </div>
-            <div id="grsModalBody" class="p-5 space-y-2"></div>
-        </div>
-    </div>
-
-    <div id="modalLihat" class="fixed inset-0 bg-slate-900/80 hidden flex justify-center items-center p-4 z-50">
-        <div class="bg-white dark:bg-[#1b1b1b] w-full max-w-sm rounded-2xl overflow-hidden relative shadow-2xl">
-            <button onclick="document.getElementById('modalLihat').classList.add('hidden')" class="absolute top-3 right-4 text-slate-400 hover:text-red-500 font-bold text-xl">×</button>
-            <div class="p-4 border-b dark:border-slate-700 bg-slate-50 dark:bg-slate-800"><h3 class="font-black text-sm">Detail Transaksi</h3></div>
-            <div class="p-5 max-h-[70vh] overflow-y-auto" id="modalContent"></div>
-        </div>
-    </div>
-
-    <script>
-        window.showToast = function(message, type = 'info') {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            let colors = 'bg-slate-800 text-white border border-slate-700'; let icon = '';
-            if(type === 'success') { colors = 'bg-emerald-500 text-white border border-emerald-400 shadow-emerald-500/30'; icon = ''; if(navigator.vibrate) navigator.vibrate(50); } 
-            else if(type === 'error') { colors = 'bg-red-500 text-white border border-red-400 shadow-red-500/30'; icon = ''; if(navigator.vibrate) navigator.vibrate([50, 50, 50]); } 
-            else if(type === 'warning') { colors = 'bg-amber-500 text-white border border-amber-400 shadow-amber-500/30'; icon = ''; if(navigator.vibrate) navigator.vibrate(30); }
-            toast.className = `flex items-center space-x-3 px-4 py-3 rounded-2xl shadow-xl text-[12px] font-bold pointer-events-auto toast-enter ${colors}`;
-            toast.innerHTML = `<span class="text-lg leading-none">${icon}</span> <span>${message}</span>`;
-            container.appendChild(toast);
-            setTimeout(() => { toast.classList.replace('toast-enter', 'toast-leave'); setTimeout(() => toast.remove(), 300); }, 3000);
-        }
-
-        function toggleTheme() { /* IndcHub: dark mode permanen */ }
-        document.documentElement.classList.add('dark');
-
-        let currentUser = null; let currentRole = null; let currentActiveBatch = []; let isRegisterMode = false;
-        const authHeaders = () => ({ 'X-Auth': localStorage.getItem('bawx_token') || '' });
-        let globalMenus = { dashboard: true, search: true, toko: true, generator: true, timestamp: true };
-
-        async function muatDataKatalog() { }
-
-        function getDbKey(type) { return `${currentUser}_bawx_${type}`; }
-        function getNumbers() { const d = JSON.parse(localStorage.getItem(getDbKey('numbers'))) || []; return d.map(x => typeof x === 'string' ? { number: x, full: x } : x); }
-        function getMyLogs() { return JSON.parse(localStorage.getItem(getDbKey('logs'))) || []; }
-        function saveNumbers(data) { localStorage.setItem(getDbKey('numbers'), JSON.stringify(data)); }
-        function saveMyLogs(data) { localStorage.setItem(getDbKey('logs'), JSON.stringify(data)); }
-
-        function catatAktivitas(action, detail) {
-            if(!currentUser) return;
-            fetch('/api/log/activity', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: currentUser, action: action, detail: detail, timestamp: Date.now() }) }).catch(e => {}); 
-        }
-
-        document.addEventListener("DOMContentLoaded", async () => {
-            if (localStorage.getItem('bawx_session')) { 
-                currentUser = localStorage.getItem('bawx_session'); 
-                currentRole = localStorage.getItem('bawx_role'); 
-                try {
-                    const chk = await (await fetch('/api/me', { headers: authHeaders() })).json();
-                    if (!chk.success) { ['bawx_session','bawx_role','bawx_token'].forEach(k => localStorage.removeItem(k)); currentUser = null; currentRole = null; return; }
-                    const res = await fetch('/api/settings');
-                    const data = await res.json();
-                    if(data.menus) globalMenus = data.menus;
-                } catch(e){}
-                showWorkspace(); muatDataKatalog(); 
-            }
-        });
-
-        function toggleSidebar() { const sb = document.getElementById('sidebar'); const ov = document.getElementById('sidebarOverlay'); if (sb.classList.contains('-translate-x-full')) { sb.classList.remove('-translate-x-full'); ov.classList.remove('hidden'); } else { sb.classList.add('-translate-x-full'); ov.classList.add('hidden'); } }
-        
-        function switchMode(mode, push) {
-            toggleSidebar();
-            if (['dashboard', 'search', 'toko', 'generator', 'timestamp'].includes(mode)) {
-                if (globalMenus[mode] === false && currentRole === 'user') {
-                    showToast('Maaf, menu sedang di-OFF-kan oleh Admin.', 'warning'); return;
-                }
-            }
-            ['areaHome', 'areaDashboard', 'areaAdmin', 'areaSearch', 'areaToko', 'areaDetail', 'areaGenerator', 'areaTimestamp', 'areaGitdata', 'areaGrs'].forEach(id => {
-                const el = document.getElementById(id); if (el) el.classList.add('hidden');
-            });
-            let activeEl = null;
-            if(mode === 'home') activeEl = document.getElementById('areaHome');
-            else if(mode === 'dashboard') activeEl = document.getElementById('areaDashboard');
-            else if(mode === 'admin') { activeEl = document.getElementById('areaAdmin'); loadAdminData(); }
-            else if(mode === 'gitdata') { activeEl = document.getElementById('areaGitdata'); gdLoad(1); }
-            else if(mode === 'tg') { activeEl = document.getElementById('areaTg'); tgRefresh(); }
-            else if(mode === 'grs') { activeEl = document.getElementById('areaGrs'); grsStats(); document.getElementById('grsInNik').focus(); }
-            else if(mode === 'search') { activeEl = document.getElementById('areaSearch'); muatDataKatalog(); }
-            else if(mode === 'toko') activeEl = document.getElementById('areaToko');
-            else if(mode === 'generator') activeEl = document.getElementById('areaGenerator');
-            else if(mode === 'timestamp') { 
-                activeEl = document.getElementById('areaTimestamp'); 
-                initTimestampApp(); 
-                setTimeout(() => { if(tsMapInstance) tsMapInstance.invalidateSize(); }, 400); 
-            }
-
-            if(activeEl) { activeEl.classList.remove('hidden'); activeEl.classList.remove('fade-in-up'); void activeEl.offsetWidth; activeEl.classList.add('fade-in-up'); }
-            if (push !== false) navTo(routePath(mode), false);
-        }
-
-        // ==========================================
-        // ROUTER — deep link per menu (History API)
-        // / → home | /dashboard | /caribarang/:q?/:plu? |
-        // /caritoko/:q? | /generator | /timestamp |
-        // /admin | /gitdata | /telegram | /grs
-        // Tiap pindah menu = entri riwayat → tombol back HP
-        // mundur antar-menu, bukan menutup web.
-        // ==========================================
-        const ROUTE2MODE = { '': 'home', 'dashboard': 'dashboard', 'caribarang': 'search', 'caritoko': 'toko', 'generator': 'generator', 'timestamp': 'timestamp', 'admin': 'admin', 'gitdata': 'gitdata', 'telegram': 'tg', 'grs': 'grs' };
-        const MODE2ROUTE = { 'home': '', 'dashboard': 'dashboard', 'search': 'caribarang', 'toko': 'caritoko', 'generator': 'generator', 'timestamp': 'timestamp', 'admin': 'admin', 'gitdata': 'gitdata', 'tg': 'telegram', 'grs': 'grs' };
-        let lastSearchQ = '';
-
-        function routePath(mode, q) {
-            const base = MODE2ROUTE[mode] || '';
-            let p = '/' + base;
-            if ((mode === 'search' || mode === 'toko') && q) p += '/' + encodeURIComponent(q);
-            return p;
-        }
-        function navTo(path, replace) {
-            if (!currentUser) return;
-            if (replace) { history.replaceState(null, '', path); return; }
-            if (location.pathname !== path) history.pushState(null, '', path);
-        }
-        async function applyRoute() {
-            if (!currentUser) return;
-            const segs = location.pathname.split('/').filter(Boolean).map(s => { try { return decodeURIComponent(s); } catch (e) { return s; } });
-            const mode = ROUTE2MODE[segs[0] || ''] || 'home';
-            const q = segs[1] || '';
-            const plu = segs[2] || '';
-            if (mode === 'search' || mode === 'toko') {
-                switchMode(mode, false);
-                if (q) {
-                    document.getElementById(mode === 'search' ? 'inputSearchProd' : 'inputSearchToko').value = q;
-                    const results = mode === 'search' ? await doSearchProd() : await doSearchToko();
-                    if (plu && mode === 'search' && Array.isArray(results)) {
-                        const item = results.find(x => String(x.plu).trim() === plu);
-                        if (item) showDetailProduct(item, true);
-                    }
-                }
-                history.replaceState(null, '', location.pathname);
-            } else {
-                switchMode(mode, false);
-                history.replaceState(null, '', routePath(mode));
-            }
-        }
-        window.addEventListener('popstate', () => { applyRoute(); });
-
-        // ==========================================
-        // DATA MASTER GITHUB (OWNER)
-        // ==========================================
-        let gdDs = 'toko', gdPageNum = 1, gdPages = 1, gdEditKey = null, gdLastItems = [];
-        const GD_SCHEMA = {
-            toko: [['no','No','number'],['storeCode','Store Code','text','req'],['storeName','Nama Toko','text','req'],['storeType','Tipe Toko'],['indomaretStoreCode','Indomaret Code'],['address','Alamat'],['openingHour','Jam Buka'],['closingHour','Jam Tutup'],['latitude','Latitude','number'],['longitude','Longitude','number'],['operational','Operasional','bool'],['inCoverage','In Coverage','bool'],['dcCode','DC Code'],['googleMaps','Google Maps URL']],
-            barcode: [['plu','PLU','text','req'],['barcode','Barcode','text','req'],['nama','Nama Produk'],['gambar','URL Gambar']]
-        };
-        const GD_KEY = { toko: 'storeCode', barcode: 'plu' };
-        window.gdSetDs = function(ds) {
-            gdDs = ds;
-            const on = 'flex-1 py-2.5 rounded-lg font-bold text-[11px] tab-active transition-all shadow-md';
-            const off = 'flex-1 py-2.5 rounded-lg font-bold text-[11px] tab-inactive transition-all';
-            document.getElementById('btnGdToko').className = ds === 'toko' ? on : off;
-            document.getElementById('btnGdBarcode').className = ds === 'barcode' ? on : off;
-            gdLoad(1);
-        };
-        window.gdLoad = async function(page) {
-            const list = document.getElementById('gdList');
-            list.innerHTML = '<p class="text-center text-xs text-slate-400 py-6 font-bold">Memuat data dari GitHub...</p>';
-            try {
-                const q = document.getElementById('gdSearch').value.trim();
-                const res = await fetch(`/api/admin/gitdata?ds=${gdDs}&q=${encodeURIComponent(q)}&page=${page}&per=50`, { headers: authHeaders() });
-                const data = await res.json();
-                if (!data.success) throw new Error(data.message || 'Gagal memuat data.');
-                gdPageNum = data.page; gdPages = data.pages; gdLastItems = data.items;
-                document.getElementById('gdInfo').textContent = `${data.total} data | hal ${data.page}/${data.pages}`;
-                document.getElementById('gdPrev').disabled = data.page <= 1;
-                document.getElementById('gdNext').disabled = data.page >= data.pages;
-                const K = data.key;
-                list.innerHTML = data.items.length ? '' : '<p class="text-center text-xs text-slate-400 py-6 font-bold">Tidak ada data yang cocok.</p>';
-                data.items.forEach(it => {
-                    const keyEsc = String(it[K]).replace(/'/g, "\\'").replace(/"/g, '&quot;');
-                    const main = gdDs === 'toko' ? `${it.storeCode} - ${it.storeName || ''}` : `${it.plu} - ${it.nama || ''}`;
-                    const sub = gdDs === 'toko' ? `${it.storeType || ''}${it.address ? ' | ' + it.address : ''}` : `BC: ${it.barcode || '-'}`;
-                    list.innerHTML += `<div class="bg-white dark:bg-[#1b1b1b] border border-slate-200 dark:border-slate-700 rounded-xl p-3 flex justify-between items-center gap-2">
-                        <div class="min-w-0"><p class="text-xs font-black truncate">${main}</p><p class="text-[10px] text-slate-500 truncate">${sub}</p></div>
-                        <div class="flex space-x-1 shrink-0">
-                            <button onclick="gdForm('${keyEsc}')" class="bg-orange-500 hover:bg-orange-600 text-white px-2.5 py-1 rounded-lg text-[10px] font-black transition">EDIT</button>
-                            <button onclick="gdDelete('${keyEsc}')" class="bg-red-500 hover:bg-red-600 text-white px-2.5 py-1 rounded-lg text-[10px] font-black transition">HAPUS</button>
-                        </div></div>`;
-                });
-            } catch (e) { list.innerHTML = `<p class="text-center text-xs text-red-500 py-6 font-bold">${e.message}</p>`; }
-        };
-        window.gdPage = function(d) { gdLoad(Math.min(Math.max(1, gdPageNum + d), gdPages)); };
-        window.gdForm = function(keyId) {
-            gdEditKey = keyId || null;
-            let it = {};
-            if (keyId) it = gdLastItems.find(x => String(x[GD_KEY[gdDs]]) === String(keyId)) || {};
-            const f = document.getElementById('gdFormEl');
-            document.getElementById('gdModalTitle').textContent = keyId ? `EDIT: ${keyId}` : `TAMBAH ${gdDs.toUpperCase()}`;
-            f.innerHTML = GD_SCHEMA[gdDs].map(([k, label, type, req]) => {
-                const v = (it[k] === undefined || it[k] === null) ? '' : it[k];
-                if (type === 'bool') return `<label class="flex items-center justify-between bg-slate-100 dark:bg-slate-800 px-3 py-2 rounded-xl"><span class="text-[11px] font-bold">${label}</span><input type="checkbox" name="${k}" ${v === true || v === 'true' ? 'checked' : ''} class="w-4 h-4 rounded text-orange-600 focus:ring-orange-500"></label>`;
-                return `<div><label class="text-[10px] font-black text-slate-500 uppercase tracking-wider">${label}${req ? ' *' : ''}</label><input name="${k}" value="${String(v).replace(/"/g, '&quot;')}" ${type === 'number' ? 'type="number" step="any"' : 'type="text"'} class="w-full mt-1 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:border-orange-500"></div>`;
-            }).join('') + '<button type="submit" class="w-full bg-gradient-to-r from-amber-400 to-orange-500 text-slate-900 font-black py-3 rounded-xl shadow-lg transition hover:scale-[1.02] mt-2">SIMPAN KE GITHUB</button>';
-            document.getElementById('modalGd').classList.remove('hidden');
-        };
-        window.gdSaveItem = async function(e) {
-            e.preventDefault();
-            const fd = new FormData(e.target); const item = {};
-            GD_SCHEMA[gdDs].forEach(([k,, type]) => { item[k] = type === 'bool' ? fd.get(k) === 'on' : (fd.get(k) || '').toString().trim(); });
-            const btn = e.target.querySelector('button[type=submit]'); btn.disabled = true; btn.textContent = 'MENGIRIM KE GITHUB...';
-            try {
-                const res = await fetch('/api/admin/gitdata', { method: 'POST', headers: { ...authHeaders(), 'Content-Type': 'application/json' }, body: JSON.stringify({ ds: gdDs, action: gdEditKey ? 'edit' : 'add', keyId: gdEditKey, item }) });
-                const data = await res.json();
-                if (data.success) { showToast(gdEditKey ? 'Perubahan berhasil dikomit ke GitHub!' : 'Data baru berhasil ditambahkan!', 'success'); document.getElementById('modalGd').classList.add('hidden'); gdLoad(gdPageNum); }
-                else showToast(data.message || 'Gagal menyimpan.', 'error');
-            } catch (err) { showToast('Error: ' + err.message, 'error'); }
-            btn.disabled = false; btn.textContent = 'SIMPAN KE GITHUB';
-            return false;
-        };
-        window.gdDelete = async function(keyId) {
-            if (!confirm(`Hapus data "${keyId}" dari GitHub? Aksi ini akan membuat commit baru.`)) return;
-            showToast('Menghapus data...', 'warning');
-            try {
-                const res = await fetch('/api/admin/gitdata', { method: 'POST', headers: { ...authHeaders(), 'Content-Type': 'application/json' }, body: JSON.stringify({ ds: gdDs, action: 'delete', keyId }) });
-                const data = await res.json();
-                if (data.success) { showToast('Data berhasil dihapus & dikomit.', 'success'); gdLoad(gdPageNum); }
-                else showToast(data.message || 'Gagal menghapus.', 'error');
-            } catch (err) { showToast('Error: ' + err.message, 'error'); }
-        };
-
-        // ==========================================
-        // TELEGRAM CHECKOUT (OWNER ONLY)
-        // ==========================================
-        let tgStep = null;
-        function tgShowMsg(text, ok) {
-            const el = document.getElementById('tgMsg');
-            el.textContent = text;
-            el.className = 'text-xs font-bold p-3 rounded-xl ' + (ok ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600');
-            el.classList.remove('hidden');
-        }
-        window.tgRefresh = async function() {
-            try {
-                const res = await fetch('/api/tg/status', { headers: authHeaders() });
-                if (res.status === 401 || res.status === 403) return;
-                const data = await res.json();
-                const pill = document.getElementById('tgPill');
-                const dot = document.getElementById('cardTgDot');
-                const tInput = document.getElementById('tgTargetInput');
-                const tInfo = document.getElementById('tgTargetInfo');
-                if (data.target && tInput && document.activeElement !== tInput) tInput.value = data.target;
-                if (tInfo) tInfo.textContent = data.target ? `Saat ini: @${data.target}` : '';
-                if (data.connected) {
-                    pill.textContent = 'TERHUBUNG'; pill.className = 'text-[11px] font-black px-3 py-1 rounded-full bg-emerald-100 text-emerald-700';
-                    if (dot) dot.className = 'w-2 h-2 rounded-full bg-emerald-500';
-                    document.getElementById('tgLoginForm').classList.add('hidden');
-                    tgStep = null;
-                } else {
-                    pill.textContent = 'BELUM LOGIN'; pill.className = 'text-[11px] font-black px-3 py-1 rounded-full bg-red-100 text-red-600';
-                    if (dot) dot.className = 'w-2 h-2 rounded-full bg-red-500';
-                    document.getElementById('tgLoginForm').classList.remove('hidden');
-                    tgApplyStep(data.step);
-                }
-            } catch (err) {}
-        };
-        function tgApplyStep(step) {
-            tgStep = step;
-            document.getElementById('tgStepBadge').textContent = step === 'CODE' ? '2' : step === 'PASSWORD' ? '!' : '1';
-            document.getElementById('tgStepCode').classList.toggle('hidden', step !== 'CODE');
-            document.getElementById('tgStepPass').classList.toggle('hidden', step !== 'PASSWORD');
-            const badge = document.getElementById('tgStepBadge').parentElement;
-            badge.classList.toggle('text-amber-600', step === 'PASSWORD');
-            badge.classList.toggle('text-sky-600', step !== 'PASSWORD');
-        }
-        window.tgSendCode = async function() {
-            const phone = document.getElementById('tgPhone').value.replace(/[^0-9]/g,'');
-            if (!phone) return tgShowMsg('Masukkan nomor dulu.', false);
-            tgShowMsg('Meminta kode OTP ke Telegram...', true);
-            try {
-                const res = await fetch('/api/tg/send-code', { method:'POST', headers:{...authHeaders(),'Content-Type':'application/json'}, body: JSON.stringify({ phone }) });
-                const data = await res.json();
-                if (data.success) { tgApplyStep('CODE'); tgShowMsg(data.message + ' Cek aplikasi Telegram Anda.', true); document.getElementById('tgCode').focus(); }
-                else tgShowMsg(data.message || 'Gagal.', false);
-            } catch (err) { tgShowMsg('Error: ' + err.message, false); }
-        };
-        window.tgVerify = async function() {
-            const code = document.getElementById('tgCode').value.trim();
-            if (!code) return tgShowMsg('Masukkan kode OTP.', false);
-            tgShowMsg('Memverifikasi...', true);
-            try {
-                const res = await fetch('/api/tg/verify', { method:'POST', headers:{...authHeaders(),'Content-Type':'application/json'}, body: JSON.stringify({ code }) });
-                const data = await res.json();
-                if (data.needPassword) { tgApplyStep('PASSWORD'); tgShowMsg('Akun ini pakai 2FA. Masukkan password.', true); document.getElementById('tgPass').focus(); return; }
-                if (data.connected) { tgRefresh(); tgShowMsg(data.message || 'Telegram terhubung!', true); showToast('Telegram Checkout aktif!', 'success'); }
-                else tgShowMsg(data.message || 'Gagal verifikasi.', false);
-            } catch (err) { tgShowMsg('Error: ' + err.message, false); }
-        };
-        window.tgSubmitPass = async function() {
-            const password = document.getElementById('tgPass').value;
-            if (!password) return tgShowMsg('Masukkan password 2FA.', false);
-            tgShowMsg('Memverifikasi password...', true);
-            try {
-                const res = await fetch('/api/tg/password', { method:'POST', headers:{...authHeaders(),'Content-Type':'application/json'}, body: JSON.stringify({ password }) });
-                const data = await res.json();
-                if (data.connected) { tgRefresh(); tgShowMsg(data.message || 'Telegram terhubung!', true); showToast('Telegram Checkout aktif!', 'success'); }
-                else tgShowMsg(data.message || 'Password salah.', false);
-            } catch (err) { tgShowMsg('Error: ' + err.message, false); }
-        };
-        window.tgSaveTarget = async function() {
-            const target = document.getElementById('tgTargetInput').value.trim();
-            if (!target) return tgShowMsg('Masukkan username bot tujuan.', false);
-            try {
-                const res = await fetch('/api/tg/target', { method:'POST', headers:{...authHeaders(),'Content-Type':'application/json'}, body: JSON.stringify({ target }) });
-                const data = await res.json();
-                tgShowMsg(data.message, data.success);
-                if (data.success) { document.getElementById('tgTargetInput').value = data.target; showToast('Bot tujuan disimpan!', 'success'); }
-            } catch (err) { tgShowMsg('Error: ' + err.message, false); }
-        };
-        window.tgLogout = async function() {
-            if (!confirm('Putuskan sesi Telegram & hapus file sesi?')) return;
-            try {
-                const res = await fetch('/api/tg/logout', { method:'POST', headers:{...authHeaders()} });
-                const data = await res.json();
-                tgShowMsg(data.message, data.success);
-                document.getElementById('tgPass').value = ''; document.getElementById('tgCode').value = '';
-                tgRefresh();
-            } catch (err) { tgShowMsg('Error: ' + err.message, false); }
-        };
-
-        // ==========================================
-                // DATA GRS (OWNER & ADMIN) - tampilan sama seperti app localhost:8080
-        const grsEsc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-        let grsStatsLoaded = false;
-        window.grsTab = function(tab) {
-            const on = 'flex-1 py-2.5 rounded-lg font-bold text-[11px] tab-active transition-all shadow-md';
-            const off = 'flex-1 py-2.5 rounded-lg font-bold text-[11px] tab-inactive transition-all';
-            document.getElementById('btnGrsTabNik').className = tab === 'nik' ? on : off;
-            document.getElementById('btnGrsTabToko').className = tab === 'toko' ? on : off;
-            document.getElementById('panelGrsNik').classList.toggle('hidden', tab !== 'nik');
-            document.getElementById('panelGrsToko').classList.toggle('hidden', tab !== 'toko');
-            document.getElementById(tab === 'nik' ? 'grsInNik' : 'grsInToko').focus();
-        };
-        window.grsStats = async function() {
-            if (grsStatsLoaded) return;
-            try {
-                const res = await fetch('/api/grs/stats', { headers: authHeaders() });
-                const s = await res.json();
-                if (s.error || s.success === false) return;
-                const live = s.live || {};
-                const liveBadge = live.status === 'ok' ? '<span class="text-[8px] font-black px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400">LIVE</span>' : '<span class="text-[8px] font-black px-1.5 py-0.5 rounded bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400">OFFLINE</span>';
-                document.getElementById('grsStatbar').innerHTML =
-                    `<div class="bg-white dark:bg-[#1b1b1b] border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-center"><p class="text-base font-black text-emerald-500">${Number(s.personil || 0).toLocaleString('id')}</p><p class="text-[9px] font-bold text-slate-500 uppercase tracking-wide">Personil (CSV)</p></div>` +
-                    `<div class="bg-white dark:bg-[#1b1b1b] border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-center"><p class="text-base font-black text-emerald-500">${Number(s.toko || 0).toLocaleString('id')}</p><p class="text-[9px] font-bold text-slate-500 uppercase tracking-wide">Toko (CSV)</p></div>` +
-                    `<div class="bg-white dark:bg-[#1b1b1b] border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-center"><p class="text-base font-black text-emerald-500">${live.personil != null ? Number(live.personil).toLocaleString('id') : '-'}</p><p class="text-[9px] font-bold text-slate-500 uppercase tracking-wide">Personil Live ${liveBadge}</p></div>` +
-                    `<div class="bg-white dark:bg-[#1b1b1b] border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-center"><p class="text-base font-black text-emerald-500">${grsEsc(String(s.am ?? '-'))}</p><p class="text-[9px] font-bold text-slate-500 uppercase tracking-wide">Area Manager</p></div>`;
-                grsStatsLoaded = true;
-            } catch (e) {}
-        };
-        const grsBadge = (st) => {
-            st = String(st || '').toUpperCase();
-            if (!st) return '';
-            let c = 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400';
-            if (st === 'SUDAH') c = 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400';
-            else if (st === 'SELESAI') c = 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400';
-            else if (st === 'BELUM') c = 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400';
-            return `<span class="text-[8px] font-black px-1.5 py-0.5 rounded ${c}">${grsEsc(st)}</span>`;
-        };
-        const grsSrc = (s) => s === 'live'
-            ? '<span class="text-[8px] font-black px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400">LIVE</span>'
-            : '<span class="text-[8px] font-black px-1.5 py-0.5 rounded bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400">CSV</span>';
-        const grsPct = (p) => {
-            const n = parseFloat(String(p || '').replace('%', ''));
-            if (isNaN(n)) return '<span class="text-[10px] text-slate-400">-</span>';
-            const c = Math.min(100, Math.max(0, n));
-            const warna = c >= 100 ? 'bg-emerald-500' : c >= 50 ? 'bg-amber-500' : 'bg-red-500';
-            return `<div class="flex items-center gap-2 w-full justify-end"><div class="flex-1 max-w-[120px] h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden"><div class="h-full ${warna} rounded-full" style="width:${c}%"></div></div><span class="text-[10px] font-black">${c}%</span></div>`;
-        };
-        const grsWa = (num) => {
-            const wa = String(num || '').replace(/\D/g, '');
-            return wa ? ` <a href="https://wa.me/${wa}" target="_blank" class="text-emerald-500 hover:text-emerald-400 font-black text-[10px] underline">WA</a>` : '';
-        };
-        const grsRow = (k, v) => `<div class="flex justify-between items-center gap-3 py-1.5 border-b border-dashed border-slate-200 dark:border-slate-700 text-[11px] last:border-0"><span class="text-slate-500 font-bold shrink-0">${k}</span><span class="font-bold text-right min-w-0">${v}</span></div>`;
-        const grsChip = (v) => `<span class="text-[10px] font-mono bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 px-1.5 py-0.5 rounded text-orange-500 shrink-0">${grsEsc(v)}</span>`;
-        const grsPersonilCard = (p) => `
-            <div class="bg-white dark:bg-[#1b1b1b] border border-slate-200 dark:border-slate-700 rounded-xl p-3">
-                <div class="flex items-center flex-wrap gap-1.5">
-                    <h4 class="text-xs font-black">${grsEsc(p.namaPersonil)}</h4>
-                    ${grsChip(p.nik)}${grsSrc(p.source)}${grsBadge(p.status)}
-                </div>
-                <p class="text-[10px] text-slate-500 mt-0.5 mb-1">${grsEsc(p.jabatan)}</p>
-                ${grsRow('Toko', `${grsEsc(p.kdtk)} - ${grsEsc(p.namaToko)}`)}
-                ${grsRow('AS', `${grsEsc(p.as) || '-'}${grsWa(p.asWa)}`)}
-                ${grsRow('AM', `${grsEsc(p.am) || '-'}${grsWa(p.amWa)}`)}
-                ${grsRow('Progres', grsPct(p.progresPersen))}
-                ${(p.terisi || p.totalItem) ? grsRow('Item Terisi', `${grsEsc(p.terisi)} / ${grsEsc(p.totalItem)}`) : ''}
-            </div>`;
-        const grsTokoCard = (t) => {
-            const list = (t.personil || []).map(pp => `
-                <li onclick="grsCariNik('${grsEsc(pp.nik)}')" class="flex justify-between items-center gap-2 py-2 border-b border-slate-200 dark:border-slate-700 last:border-0 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded transition">
-                    <div class="min-w-0"><p class="text-[11px] font-bold truncate">${grsEsc(pp.namaPersonil)}</p><p class="text-[9px] text-slate-500">${grsEsc(pp.jabatan)}</p></div>
-                    ${grsChip(pp.nik)}
-                </li>`).join('');
-            return `
-            <div class="bg-white dark:bg-[#1b1b1b] border border-slate-200 dark:border-slate-700 rounded-xl p-3">
-                <div class="flex items-center flex-wrap gap-1.5">
-                    <h4 class="text-xs font-black">${grsEsc(t.namaToko)}</h4>
-                    ${grsChip(t.kdtk)}${grsSrc(t.source)}${grsBadge(t.status)}
-                </div>
-                <p class="text-[10px] text-slate-500 mt-0.5">${grsEsc(t.jumlahPersonil)} personil terdaftar</p>
-                ${grsRow('AS', `${grsEsc(t.as) || '-'}${grsWa(t.asWa)}`)}
-                ${grsRow('AM', `${grsEsc(t.am) || '-'}${grsWa(t.amWa)}`)}
-                ${grsRow('Progres', grsPct(t.progresPersen))}
-                ${grsRow('Item Terisi', `${grsEsc(t.terisi)} / ${grsEsc(t.totalItem)}`)}
-                <button onclick="grsDetail('${grsEsc(t.kdtk)}')" class="w-full mt-2 bg-transparent border border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-black font-black text-[11px] py-2 rounded-xl transition">DETAIL TOKO &amp; MAPS</button>
-                ${(t.personil && t.personil.length) ? `<ul class="mt-2">${list}</ul><p class="text-[9px] text-slate-400 text-center mt-1">Ketuk personil untuk cari NIK-nya</p>` : ''}
-            </div>`;
-        };
-        window.grsCariNik = function(nik) {
-            grsTab('nik');
-            document.getElementById('grsInNik').value = nik;
-            grsDoNik();
-        };
-        window.grsDoNik = async function() {
-            const q = document.getElementById('grsInNik').value.trim();
-            const box = document.getElementById('resGrsNik');
-            if (!q) return showToast('Masukkan NIK dulu.', 'warning');
-            box.innerHTML = '<p class="text-center text-xs text-slate-400 py-6 font-bold">Mencari personil...</p>';
-            try {
-                const res = await fetch(`/api/grs/nik?q=${encodeURIComponent(q)}`, { headers: authHeaders() });
-                const d = await res.json();
-                if (d.error) throw new Error(d.error);
-                if (!d.results || !d.results.length) { box.innerHTML = `<p class="text-center text-xs text-slate-400 py-6 font-bold">Personil dengan NIK ${grsEsc(q)} tidak ditemukan.</p>`; return; }
-                box.innerHTML = `<p class="text-[10px] text-slate-500 font-bold px-1">${d.results.length} hasil untuk NIK ${grsEsc(q)}</p>` + d.results.map(grsPersonilCard).join('');
-            } catch (e) { box.innerHTML = `<p class="text-center text-xs text-red-500 py-6 font-bold">${grsEsc(e.message)}</p>`; }
-        };
-        window.grsDoToko = async function() {
-            const q = document.getElementById('grsInToko').value.trim().toUpperCase();
-            const box = document.getElementById('resGrsToko');
-            if (!q) return showToast('Masukkan kode toko dulu.', 'warning');
-            box.innerHTML = '<p class="text-center text-xs text-slate-400 py-6 font-bold">Mencari toko...</p>';
-            try {
-                const res = await fetch(`/api/grs/toko?q=${encodeURIComponent(q)}`, { headers: authHeaders() });
-                const d = await res.json();
-                if (d.error) throw new Error(d.error);
-                if (!d.results || !d.results.length) { box.innerHTML = `<p class="text-center text-xs text-slate-400 py-6 font-bold">Toko dengan kode ${grsEsc(q)} tidak ditemukan.</p>`; return; }
-                box.innerHTML = `<p class="text-[10px] text-slate-500 font-bold px-1">${d.results.length} hasil untuk ${grsEsc(q)}</p>` + d.results.map(grsTokoCard).join('');
-            } catch (e) { box.innerHTML = `<p class="text-center text-xs text-red-500 py-6 font-bold">${grsEsc(e.message)}</p>`; }
-        };
-        window.grsDetail = async function(kdtk) {
-            const title = document.getElementById('grsModalTitle');
-            const body = document.getElementById('grsModalBody');
-            title.textContent = 'DETAIL TOKO';
-            body.innerHTML = '<p class="text-center text-xs text-slate-400 py-6 font-bold">Memuat detail toko...</p>';
-            document.getElementById('modalGrs').classList.remove('hidden');
-            try {
-                const res = await fetch(`/api/grs/detailtoko?q=${encodeURIComponent(kdtk)}`, { headers: authHeaders() });
-                const d = await res.json();
-                if (d.error) throw new Error(d.error);
-                const st = d.operational
-                    ? '<span class="text-[8px] font-black px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400">BUKA</span>'
-                    : '<span class="text-[8px] font-black px-1.5 py-0.5 rounded bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400">TUTUP</span>';
-                const koor = (d.latitude != null && d.longitude != null) ? `${d.latitude}, ${d.longitude}` : '-';
-                body.innerHTML = `
-                    <div class="flex items-center flex-wrap gap-1.5 mb-1">
-                        <h4 class="text-sm font-black">${grsEsc(d.storeName)}</h4>
-                        ${grsChip(d.kdtk)}${st}
-                    </div>
-                    <p class="text-[10px] text-slate-500 mb-2">${grsEsc(d.storeType || '-')}</p>
-                    ${grsRow('Kode Toko', grsEsc(d.kdtk) || '-')}
-                    ${grsRow('Distribution Center', grsEsc(d.dcCode) || '-')}
-                    ${grsRow('Alamat', `<span class="text-left">${grsEsc(d.address) || '-'}</span>`)}
-                    ${grsRow('Jam Buka', `${grsEsc(d.openingHour) || '-'} - ${grsEsc(d.closingHour) || '-'}`)}
-                    ${grsRow('Koordinat', `<span class="font-mono text-orange-500">${grsEsc(koor)}</span>`)}
-                    ${grsRow('Coverage', d.inCoverage ? 'IN COVERAGE' : 'LUAR COVERAGE')}
-                    ${d.googleMaps ? `<a href="${grsEsc(d.googleMaps)}" target="_blank" class="block text-center bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs py-3 rounded-xl mt-3 transition">BUKA DI GOOGLE MAPS</a>` : ''}
-                    <p class="text-[9px] text-slate-400 text-center mt-2">Sumber: toko-idm (GitHub)</p>`;
-            } catch (e) { body.innerHTML = `<p class="text-center text-xs text-red-500 py-6 font-bold">${grsEsc(e.message)}</p>`; }
-        };
-
-window.toggleAuthMode = function() { 
-            isRegisterMode = !isRegisterMode; document.getElementById('authMessage').classList.add('hidden'); 
-            if (isRegisterMode) { document.getElementById('btnSubmitAuth').innerText = "DAFTAR SEKARANG"; document.getElementById('toggleText').innerHTML = `Sudah punya akses? <span onclick="toggleAuthMode()" class="text-orange-500 font-bold cursor-pointer hover:underline">Login Disini</span>`; } 
-            else { document.getElementById('btnSubmitAuth').innerText = "MASUK WORKSPACE"; document.getElementById('toggleText').innerHTML = `Belum memiliki akses? <span onclick="toggleAuthMode()" class="text-orange-500 font-bold cursor-pointer hover:underline">Minta Akses</span>`; } 
-        }
-
-        document.getElementById('authForm').addEventListener('submit', async (e) => {
-            e.preventDefault(); const btn = document.getElementById('btnSubmitAuth'); const msg = document.getElementById('authMessage'); btn.disabled = true; msg.classList.add('hidden');
-            try {
-                const urlApi = isRegisterMode ? '/api/register' : '/api/login';
-                const res = await fetch(urlApi, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: document.getElementById('username').value.trim().toLowerCase(), password: document.getElementById('password').value }) });
-                const data = await res.json(); 
-                if (data.success && !isRegisterMode) { 
-                    showToast("Login Berhasil! Mengalihkan...", "success");
-                    currentUser = data.username; currentRole = data.role || 'user'; 
-                    if(data.settings && data.settings.menus) globalMenus = data.settings.menus; 
-                    localStorage.setItem('bawx_session', currentUser); localStorage.setItem('bawx_role', currentRole); if (data.token) localStorage.setItem('bawx_token', data.token); 
-                    setTimeout(()=>{showWorkspace(); muatDataKatalog();}, 500); 
-                } else if(data.success && isRegisterMode) { 
-                    showToast("Pendaftaran berhasil! Silakan login.", "success"); setTimeout(toggleAuthMode, 1000); 
-                } else { showToast(data.message || "Gagal masuk sistem.", "error"); }
-            } catch (err) { showToast("Error server lokal.", "error"); } btn.disabled = false;
-        });
-
-        function showWorkspace() { 
-            document.getElementById('authScreen').classList.add('hidden'); 
-            document.getElementById('mainWorkspace').classList.remove('hidden'); 
-            let roleLabel = currentRole === 'owner' ? ' OWNER' : currentRole === 'admin' ? ' ADMIN' : '';
-            document.getElementById('displayUsername').innerHTML = ` ${currentUser.toUpperCase()} ${roleLabel}`; 
-            document.getElementById('btnMenuAdmin').classList.toggle('hidden', currentRole === 'user');
-            document.getElementById('btnMenuGitdata').classList.toggle('hidden', currentRole !== 'owner');
-            document.getElementById('btnMenuGrs').classList.toggle('hidden', currentRole === 'user');
-            document.getElementById('cardGitdata').classList.toggle('hidden', currentRole !== 'owner');
-            document.getElementById('btnMenuTg').classList.toggle('hidden', currentRole !== 'owner');
-            document.getElementById('cardTg').classList.toggle('hidden', currentRole !== 'owner');
-            if (currentRole === 'owner') tgRefresh();
-            document.getElementById('cardGrs').classList.toggle('hidden', currentRole === 'user');
-            document.getElementById('cardTimestamp').classList.toggle('col-span-2', currentRole === 'user');
-            document.getElementById('cardGrs').classList.toggle('col-span-2', currentRole === 'owner');
-            renderNumbers(); renderLogs(); switchTab('order'); applyRoute();
-            refreshProfilUI();
-        }
-        
-        function setAvatar(imgId, initId, photo, uname) {
-            const img = document.getElementById(imgId), ini = document.getElementById(initId);
-            if (photo) { img.src = photo; img.classList.remove('hidden'); ini.classList.add('hidden'); }
-            else { img.src = ''; img.classList.add('hidden'); ini.classList.remove('hidden'); ini.textContent = (uname || '?').charAt(0).toUpperCase(); }
-        }
-        async function refreshProfilUI() {
-            try { const r = await fetch('/api/me', { headers: authHeaders() }); const d = await r.json();
-                if (d.success) {
-                    document.getElementById('sidebarName').textContent = d.username.toUpperCase();
-                    setAvatar('sidebarAvatar', 'sidebarAvatarInit', d.photo, d.username);
-                }
-            } catch (e) {}
-        }
-        async function openProfil() {
-            toggleSidebar();
-            try { const r = await fetch('/api/me', { headers: authHeaders() }); const d = await r.json();
-                if (d.success) {
-                    document.getElementById('profilUsername').textContent = '@' + d.username;
-                    document.getElementById('pfUsername').value = d.username;
-                    setAvatar('profilAvatar', 'profilAvatarInit', d.photo, d.username);
-                    document.getElementById('btnHapusFoto').classList.toggle('hidden', !d.photo);
-                } else return showToast('Sesi berakhir. Silakan login ulang.', 'warning');
-            } catch (e) { return showToast('Gagal memuat profil.', 'error'); }
-            document.getElementById('modalProfil').classList.remove('hidden');
-        }
-        async function saveFoto(ev) {
-            const file = ev.target.files[0]; ev.target.value = ''; if (!file) return;
-            if (file.size > 8 * 1024 * 1024) return showToast('File terlalu besar (maks 8MB).', 'warning');
-            const reader = new FileReader();
-            reader.onload = () => {
-                const img = new Image();
-                img.onload = () => {
-                    const c = document.createElement('canvas'), S = 256;
-                    c.width = S; c.height = S;
-                    const ctx = c.getContext('2d'), min = Math.min(img.width, img.height);
-                    ctx.drawImage(img, (img.width - min) / 2, (img.height - min) / 2, min, min, 0, 0, S, S);
-                    const dataUrl = c.toDataURL('image/jpeg', 0.85);
-                    fetch('/api/profile/photo', { method: 'POST', headers: { ...authHeaders(), 'Content-Type': 'application/json' }, body: JSON.stringify({ photo: dataUrl }) })
-                        .then(r => r.json()).then(d => {
-                            if (!d.success) return showToast(d.message || 'Gagal simpan foto.', 'error');
-                            setAvatar('profilAvatar', 'profilAvatarInit', dataUrl, '');
-                            setAvatar('sidebarAvatar', 'sidebarAvatarInit', dataUrl, currentUser || '?');
-                            document.getElementById('btnHapusFoto').classList.remove('hidden');
-                            showToast('Foto profil diperbarui!', 'success');
-                        });
-                };
-                img.onerror = () => showToast('Gambar tidak bisa dibaca.', 'error');
-                img.src = reader.result;
-            };
-            reader.readAsDataURL(file);
-        }
-        async function hapusFoto() {
-            const r = await fetch('/api/profile/photo', { method: 'POST', headers: { ...authHeaders(), 'Content-Type': 'application/json' }, body: JSON.stringify({ photo: '' }) }).then(x => x.json());
-            if (r.success) {
-                setAvatar('profilAvatar', 'profilAvatarInit', null, document.getElementById('pfUsername').value);
-                setAvatar('sidebarAvatar', 'sidebarAvatarInit', null, currentUser || '?');
-                document.getElementById('btnHapusFoto').classList.add('hidden');
-                showToast('Foto dihapus.', 'success');
-            }
-        }
-        async function simpanUsername() {
-            const nu = document.getElementById('pfUsername').value.trim();
-            const r = await fetch('/api/profile/username', { method: 'POST', headers: { ...authHeaders(), 'Content-Type': 'application/json' }, body: JSON.stringify({ newUsername: nu }) }).then(x => x.json());
-            if (!r.success) return showToast(r.message || 'Gagal.', 'error');
-            localStorage.setItem('bawx_session', nu); currentUser = nu;
-            document.getElementById('displayUsername').textContent = nu.toUpperCase();
-            document.getElementById('profilUsername').textContent = '@' + nu;
-            document.getElementById('sidebarName').textContent = nu.toUpperCase();
-            setAvatar('sidebarAvatar', 'sidebarAvatarInit', document.getElementById('profilAvatar') && !document.getElementById('profilAvatar').classList.contains('hidden') ? document.getElementById('profilAvatar').src : null, nu);
-            loadAdminData();
-            showToast(`Username diganti menjadi ${nu.toUpperCase()}!`, 'success');
-        }
-        async function simpanPassword() {
-            const lama = document.getElementById('pfPassLama').value, baru = document.getElementById('pfPassBaru').value, ulang = document.getElementById('pfPassUlang').value;
-            if (baru !== ulang) return showToast('Password baru tidak sama!', 'warning');
-            const r = await fetch('/api/profile/password', { method: 'POST', headers: { ...authHeaders(), 'Content-Type': 'application/json' }, body: JSON.stringify({ currentPassword: lama, newPassword: baru }) }).then(x => x.json());
-            if (!r.success) return showToast(r.message || 'Gagal ganti password.', 'error');
-            ['pfPassLama', 'pfPassBaru', 'pfPassUlang'].forEach(id => document.getElementById(id).value = '');
-            showToast('Password berhasil diganti!', 'success');
-        }
-        async function adminRevealPw(u) {
-            const r = await fetch('/api/admin/reveal/' + u, { method: 'POST', headers: authHeaders() }).then(x => x.json());
-            if (r.success) showModalLog({ text: `Username : ${u.toUpperCase()}\nPassword : ${r.password}` });
-            else showToast(r.message || 'Gagal.', 'error');
-        }
-        async function adminResetPw(u) {
-            const np = prompt(`Password BARU untuk ${u.toUpperCase()}:`);
-            if (np === null) return;
-            if (np.length < 3) return showToast('Minimal 3 karakter.', 'warning');
-            const r = await fetch('/api/admin/resetpw', { method: 'POST', headers: { ...authHeaders(), 'Content-Type': 'application/json' }, body: JSON.stringify({ username: u, newPassword: np }) }).then(x => x.json());
-            if (r.success) showToast(`Password ${u.toUpperCase()} berhasil direset!`, 'success');
-            else showToast(r.message || 'Gagal reset.', 'error');
-        }
-        function logoutUser() { fetch('/api/logout', { method: 'POST', headers: authHeaders() }).catch(() => {}); ['bawx_session','bawx_role','bawx_token'].forEach(k => localStorage.removeItem(k)); location.reload(); }
-        function switchTab(tab) { ['Order', 'Transaksi', 'Log'].forEach(t => { document.getElementById('view' + t).classList.add('hidden'); document.getElementById('btnTab' + t).classList.replace('tab-active', 'tab-inactive'); }); document.getElementById('view' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.remove('hidden'); document.getElementById('btnTab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.replace('tab-inactive', 'tab-active'); }
-        
-        function renderNumbers() { const listEl = document.getElementById('numberList'); const nums = getNumbers(); const usedSet = new Set(getMyLogs().map(l => l.nomor)); listEl.innerHTML = nums.length ? '' : '<p class="text-xs text-center text-slate-400 py-4 font-bold">Database Kosong.</p>'; nums.forEach((n, i) => { const num = n.number || n; const isUsed = usedSet.has(num); listEl.innerHTML += `<div class="flex items-center space-x-3 p-2 border-b dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition rounded"><input type="checkbox" class="num-checkbox w-4 h-4 rounded text-orange-600 focus:ring-orange-500" value="${num}"><span class="text-[11px] font-mono font-bold flex-1 ${isUsed ? 'text-slate-400 line-through' : 'text-slate-700 dark:text-slate-300'}">${i+1}. ${num}</span>${isUsed ? '<span class="text-[9px] text-red-500 bg-red-100/50 border border-red-200 px-1.5 py-0.5 rounded font-black">USED</span>' : ''}</div>`; }); }
-        document.getElementById('btnSimpanNomor').addEventListener('click', () => { const rawInput = document.getElementById('inputNumbers').value.trim(); if(!rawInput) return showToast('Kolom input masih kosong!', 'warning'); const parsed = {}; rawInput.split(/\n+/).forEach(line => { const clean = line.trim(); if(!clean) return; const head = clean.split(':')[0].replace(/\D/g, ''); if (head.length > 8 && head.length < 16) { let f = head.startsWith('62')?'0'+head.substring(2):head; if (!parsed[f]) parsed[f] = clean; } }); const keys = Object.keys(parsed); if(!keys.length) return showToast('Tidak ada format nomor yang valid!', 'error'); let db = getNumbers(); let countAdded = 0; keys.forEach(f => { if(!db.some(x => x.number === f)) { db.push({ number: f, full: parsed[f] }); countAdded++; } }); saveNumbers(db); document.getElementById('inputNumbers').value = ''; renderNumbers(); showToast(`${countAdded} Akun baru berhasil disimpan!`, 'success'); });
-        document.getElementById('btnSelectUnused').addEventListener('click', () => { const used = new Set(getMyLogs().map(l => l.nomor)); const cbs = document.querySelectorAll('.num-checkbox'); const unusedCbs = Array.from(cbs).filter(c => !used.has(c.value)); const allChecked = unusedCbs.every(c => c.checked); unusedCbs.forEach(c => c.checked = !allChecked); });
-        document.getElementById('btnSelectUsed').addEventListener('click', () => { const used = new Set(getMyLogs().map(l => l.nomor)); const cbs = document.querySelectorAll('.num-checkbox'); const usedCbs = Array.from(cbs).filter(c => used.has(c.value)); const allChecked = usedCbs.every(c => c.checked); usedCbs.forEach(c => c.checked = !allChecked); });
-        document.getElementById('btnHapusTerpilih').addEventListener('click', () => { const checked = Array.from(document.querySelectorAll('.num-checkbox:checked')).map(c => c.value); if(!checked.length) return showToast('Pilih nomor yang mau dihapus!', 'warning'); saveNumbers(getNumbers().filter(n => !checked.includes(n))); renderNumbers(); showToast(`${checked.length} Nomor berhasil dihapus.`, 'success'); });
-
-        async function prosesCheckout(formatOverride) {
-            const checked = document.querySelectorAll('.num-checkbox:checked'); if (!checked.length) return showToast('Pilih minimal satu nomor di daftar!', 'warning');
-            const btn1 = document.getElementById('btnGas'); const btn2 = document.getElementById('btnPin'); btn1.innerHTML = 'MENGIRIM...'; btn2.innerHTML = '...'; btn1.disabled = true; btn2.disabled = true; btn1.classList.add('opacity-50'); btn2.classList.add('opacity-50');
-            const nums = Array.from(checked).map(c => c.value); const kode = document.getElementById('kodeToko').value || '-'; const plu = document.getElementById('pluToko').value || '-'; const formatDipakai = formatOverride ? formatOverride : document.getElementById('formatMetode').value;
-            const dbAll = getNumbers();
-            const accLines = nums.map(n => { const f = dbAll.find(x => x.number === n); return (f && f.full) ? f.full : n; });
-            currentActiveBatch = nums.map(n => ({ nomor: n, kodeToko: kode, pluToko: plu, status: 'LOADING' })); switchTab('transaksi'); renderActiveBatch(); document.querySelectorAll('.num-checkbox').forEach(c => c.checked = false);
-            try {
-                const res = await fetch('/api/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: currentUser, format: formatDipakai, kodeToko: kode, plu, numbers: nums, accounts: accLines }) });
-                let data = {};
-                try { data = await res.json(); } catch(e2) {}
-                if (data.success) { let logs = getMyLogs(); data.data.forEach((item, i) => { if(currentActiveBatch[i]) { currentActiveBatch[i].status = 'SUCCESS'; currentActiveBatch[i].result = item; logs.push({ nomor: currentActiveBatch[i].nomor, kodeToko: kode, timestamp: Date.now(), result: item }); } }); saveMyLogs(logs); renderNumbers(); renderLogs(); document.getElementById('soundSuccess').play().catch(()=>{}); showToast(`Tugas berhasil dieksekusi!`, 'success');
-                } else { showToast("Ditolak: " + (data.message || `Server error (${res.status})`), 'error'); }
-            } catch (err) { currentActiveBatch.forEach(i => i.status = 'ERROR'); showToast('Gagal menghubungi server checkout. Pastikan koneksi stabil.', 'error'); }
-            btn1.innerHTML = 'GAS KAN!'; btn2.innerHTML = 'AMBIL PIN'; btn1.disabled = false; btn2.disabled = false; btn1.classList.remove('opacity-50'); btn2.classList.remove('opacity-50'); renderActiveBatch();
-        }
-        document.getElementById('btnGas').addEventListener('click', () => prosesCheckout(null)); document.getElementById('btnPin').addEventListener('click', () => prosesCheckout('GAS.PIN'));
-
-        function renderActiveBatch() { const body = document.getElementById('activeTableBody'); body.innerHTML = currentActiveBatch.length ? '' : '<tr><td colspan="4" class="text-center py-6 text-slate-400 font-bold">Tidak ada task berjalan.</td></tr>'; let isProc = false; currentActiveBatch.forEach((item, i) => { let ui = item.status === 'LOADING' ? (isProc=true, '<span class="text-orange-500 animate-spin inline-block font-black">...</span>') : item.status === 'SUCCESS' ? `<button onclick='showModalLog(${JSON.stringify(item.result).replace(/'/g, "&#39;")})' class="bg-orange-500 hover:bg-orange-600 px-3 rounded text-[10px] text-white py-1.5 font-bold shadow transition">CEK</button>` : '<span class="text-red-500 font-black text-[10px]">GAGAL</span>'; body.innerHTML += `<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50"><td class="py-3 px-2 text-[10px] text-slate-400 font-bold">${i+1}</td><td class="py-3 px-2 font-mono font-bold text-[11px]">${item.nomor}</td><td class="py-3 px-2 text-[10px] font-black">${item.kodeToko}</td><td class="py-3 px-2 text-center">${ui}</td></tr>`; }); document.getElementById('pingIndicator').style.display = isProc ? 'block' : 'none'; }
-        
-        function renderLogs() { 
-            const body = document.getElementById('logTableBody'); 
-            const logs = [...getMyLogs()].sort((a,b) => b.timestamp - a.timestamp); 
-            body.innerHTML = logs.length ? '' : '<tr><td colspan="4" class="text-center py-6 text-slate-400 font-bold">Log kosong.</td></tr>'; 
-            logs.forEach((log, i) => { 
-                body.innerHTML += `<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50"><td class="py-3"><input type="checkbox" class="cb-log w-4 h-4 rounded text-orange-600 cursor-pointer" data-index="${i}"></td><td class="py-3 font-mono text-[10px] font-bold">${log.nomor}</td><td class="py-3 text-[10px] font-black">${log.kodeToko}</td><td class="py-3 text-right"><button onclick='showModalLog(${JSON.stringify(log.result).replace(/'/g, "&#39;")})' class="bg-slate-800 dark:bg-slate-700 hover:bg-black px-3 py-1.5 rounded text-[10px] text-white font-bold transition">Buka</button></td></tr>`; 
-            }); 
-            const cbAll = document.getElementById('cbAllLogs');
-            if(cbAll) cbAll.checked = false;
-        }
-
-        window.toggleAllLogs = function(source) {
-            const checkboxes = document.querySelectorAll('.cb-log');
-            checkboxes.forEach(cb => cb.checked = source.checked);
-        }
-
-        window.copyLogTerpilih = function() {
-            const checkboxes = document.querySelectorAll('.cb-log:checked');
-            if (checkboxes.length === 0) return showToast("Pilih minimal satu transaksi!", "warning");
-            
-            const logs = [...getMyLogs()].sort((a,b) => b.timestamp - a.timestamp);
-            let combinedText = [];
-            
-            checkboxes.forEach(cb => {
-                const idx = parseInt(cb.dataset.index);
-                if (logs[idx] && logs[idx].result && logs[idx].result.text) {
-                    combinedText.push(logs[idx].result.text);
-                }
-            });
-            
-            if (combinedText.length === 0) return showToast("Teks transaksi kosong", "error");
-            
-            navigator.clipboard.writeText(combinedText.join('\n\n')).then(() => {
-                showToast(`${checkboxes.length} transaksi berhasil disalin!`, "success");
-            });
-        }
-        
-        window.bersihkanLogSaya = function() { if(confirm('Hapus histori log Anda secara permanen?')) { saveMyLogs([]); renderLogs(); renderNumbers(); showToast('Riwayat berhasil dibersihkan.', 'success'); } }
-        
-        window.showModalLog = function(obj) { 
-            let h = obj.barcodeUrl ? `<div class="bg-white p-3 rounded-xl mb-4 shadow-inner border border-slate-200"><img src="${obj.barcodeUrl}" class="w-full mix-blend-multiply"></div>` : ''; 
-            h += `<pre id="modalPreText" class="text-[10px] whitespace-pre-wrap bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-3 rounded-xl font-mono text-slate-700 dark:text-slate-300 shadow-inner">${obj.text||''}</pre>`; 
-            h += `<button onclick="copyModalText()" class="w-full mt-3 bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 rounded-lg shadow transition text-xs"> Copy Teks</button>`;
-            document.getElementById('modalContent').innerHTML = h; 
-            document.getElementById('modalLihat').classList.remove('hidden'); 
-        }
-
-        window.copyModalText = function() {
-            const txt = document.getElementById('modalPreText').innerText;
-            navigator.clipboard.writeText(txt).then(() => showToast("Teks berhasil disalin!", "success"));
-        }
-
-        async function doSearchToko() {
-            const q = document.getElementById('inputSearchToko').value.trim().toLowerCase(); const box = document.getElementById('resultToko');
-            if(!q || q.length < 3) { box.innerHTML = '<p class="text-center text-sm text-amber-500 py-4 font-bold bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200"> Masukkan minimal 3 karakter</p>'; return; }
-            box.innerHTML = '<div class="flex justify-center py-8"><span class="animate-spin text-3xl text-emerald-500"></span></div>'; catatAktivitas('Pencarian Toko', q); navTo(routePath('toko', q), true); 
-            try {
-                const res = await fetch(`/api/toko/search?q=${encodeURIComponent(q)}`); const dataServer = await res.json(); const results = dataServer.data;
-                if(!results || results.length === 0) { box.innerHTML = '<p class="text-center text-sm text-slate-500 py-6 font-bold">Data toko tidak ditemukan di sistem.</p>'; return []; }
-                box.innerHTML = '';
-                results.forEach(t => {
-                    const isBuka = t.operational === true; const isCoverage = t.inCoverage === true;
-                    box.innerHTML += `<div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-700 hover:border-emerald-500 hover:shadow-emerald-500/20 transition-all group relative overflow-hidden"><div class="absolute right-0 top-0 w-20 h-20 bg-emerald-50 dark:bg-emerald-900/20 rounded-bl-[100px] z-0"></div><div class="flex justify-between items-start mb-3 relative z-10"><div><h4 class="font-black text-slate-800 dark:text-white text-[15px] leading-tight group-hover:text-emerald-600 transition">${t.storeName}</h4><div class="flex space-x-2 mt-2"><span class="text-[9px] font-mono font-black bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600">ID: ${t.storeCode || '-'}</span><span class="text-[9px] font-mono font-black bg-orange-50 dark:bg-orange-900/30 px-2 py-0.5 rounded text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-800">DC: ${t.dcCode || '-'}</span></div></div><span class="text-[9px] ${isBuka ? 'bg-emerald-500 text-white shadow-emerald-500/40' : 'bg-red-500 text-white shadow-red-500/40'} font-black px-2.5 py-1.5 rounded-full shadow-md tracking-wider">${isBuka ? 'ONLINE' : 'OFFLINE'}</span></div><p class="text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-4 leading-relaxed relative z-10">${t.address}</p><div class="grid grid-cols-2 gap-2 mb-4 relative z-10"><div class="bg-slate-50 dark:bg-[#0d0d0d] p-2 rounded-lg border border-slate-100 dark:border-slate-700"><span class="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Tipe Toko</span><span class="block text-[10px] font-bold text-slate-700 dark:text-slate-200 truncate">${t.storeType || 'Reguler'}</span></div><div class="bg-slate-50 dark:bg-[#0d0d0d] p-2 rounded-lg border border-slate-100 dark:border-slate-700"><span class="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Layanan Antar</span><span class="block text-[10px] font-bold ${isCoverage ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'}">${isCoverage ? 'Tersedia (Coverage)' : 'Tidak Tersedia'}</span></div></div><div class="flex justify-between items-center mt-2 pt-3 border-t border-slate-100 dark:border-slate-700/50 relative z-10"><div class="flex flex-col"><div class="text-[10px] font-bold text-slate-500 mb-0.5"> <span class="text-slate-800 dark:text-slate-200">${t.openingHour || '?'} - ${t.closingHour || '?'}</span></div>${(t.latitude && t.longitude) ? `<span class="text-[8px] font-mono text-slate-400"> ${t.latitude}, ${t.longitude}</span>` : ''}</div>${t.googleMaps ? `<a href="${t.googleMaps}" target="_blank" class="bg-white text-orange-600 hover:bg-orange-600 hover:text-white border border-orange-200 text-[10px] font-black py-1.5 px-4 rounded-full shadow-sm transition duration-300">BUKA MAPS</a>` : ''}</div></div>`;
-                });
-                return results || [];
-            } catch(e) { box.innerHTML = '<p class="text-center text-sm text-red-500 py-6 font-bold">Gagal terhubung ke server toko.</p>'; return []; }
-        }
-
-        async function cariTokoTerdekat() {
-            const box = document.getElementById('resultToko');
-            if (!navigator.geolocation) { box.innerHTML = '<p class="text-center text-sm text-red-500 py-4 font-bold bg-red-50 rounded-xl">GPS tidak didukung.</p>'; return showToast("Browser tidak mendukung GPS.", "error"); }
-            box.innerHTML = '<div class="flex flex-col items-center py-8"><span class="animate-bounce text-3xl mb-2"></span><p class="text-xs font-bold text-emerald-600 animate-pulse">Melacak lokasi Anda...</p></div>';
-            
-            navigator.geolocation.getCurrentPosition(async (position) => {
-                const userLat = position.coords.latitude; const userLon = position.coords.longitude; 
-                catatAktivitas('Cari Toko Terdekat', `Titik GPS: ${userLat}, ${userLon}`); 
-                showToast("Titik GPS ditemukan!", "success");
-                
-                try {
-                    const res = await fetch(`/api/toko/nearby?lat=${userLat}&lon=${userLon}`); const dataServer = await res.json(); const results = dataServer.data;
-                    if(!results || results.length === 0) { box.innerHTML = '<p class="text-center text-sm text-amber-500 py-6 font-bold bg-amber-50 rounded-xl">Tidak ada toko dalam radius 10 KM.</p>'; return; }
-                    box.innerHTML = `<div class="mb-3 text-center"><span class="text-[10px] font-black bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full shadow-sm border border-emerald-200">DITEMUKAN ${results.length} TOKO TERDEKAT (MAX 10 KM)</span></div>`;
-                    results.forEach(t => {
-                        const isBuka = t.operational === true; const isCoverage = t.inCoverage === true; const jarakStr = t.jarakAsli.toFixed(1) + ' KM';
-                        box.innerHTML += `<div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-700 hover:border-emerald-500 hover:shadow-emerald-500/20 transition-all group relative overflow-hidden"><div class="absolute right-0 top-0 w-20 h-20 bg-emerald-50 dark:bg-emerald-900/20 rounded-bl-[100px] z-0"></div><div class="flex justify-between items-start mb-3 relative z-10"><div><h4 class="font-black text-slate-800 dark:text-white text-[15px] leading-tight group-hover:text-emerald-600 transition">${t.storeName}</h4><div class="flex space-x-2 mt-2 items-center"><span class="text-[9px] font-mono font-black bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600">ID: ${t.storeCode || '-'}</span><span class="text-[9px] font-mono font-black bg-orange-50 dark:bg-orange-900/30 px-2 py-0.5 rounded text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-800">DC: ${t.dcCode || '-'}</span><span class="text-[9px] font-black text-amber-600 bg-amber-100 px-2 py-0.5 rounded border border-amber-200"> ${jarakStr}</span></div></div><span class="text-[9px] ${isBuka ? 'bg-emerald-500 text-white shadow-emerald-500/40' : 'bg-red-500 text-white shadow-red-500/40'} font-black px-2.5 py-1.5 rounded-full shadow-md tracking-wider">${isBuka ? 'ONLINE' : 'OFFLINE'}</span></div><p class="text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-4 leading-relaxed relative z-10">${t.address}</p><div class="grid grid-cols-2 gap-2 mb-4 relative z-10"><div class="bg-slate-50 dark:bg-[#0d0d0d] p-2 rounded-lg border border-slate-100 dark:border-slate-700"><span class="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Tipe Toko</span><span class="block text-[10px] font-bold text-slate-700 dark:text-slate-200 truncate">${t.storeType || 'Reguler'}</span></div><div class="bg-slate-50 dark:bg-[#0d0d0d] p-2 rounded-lg border border-slate-100 dark:border-slate-700"><span class="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Layanan Antar</span><span class="block text-[10px] font-bold ${isCoverage ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'}">${isCoverage ? 'Tersedia (Coverage)' : 'Tidak Tersedia'}</span></div></div><div class="flex justify-between items-center mt-2 pt-3 border-t border-slate-100 dark:border-slate-700/50 relative z-10"><div class="flex flex-col"><div class="text-[10px] font-bold text-slate-500 mb-0.5"> <span class="text-slate-800 dark:text-slate-200">${t.openingHour || '?'} - ${t.closingHour || '?'}</span></div>${(t.latitude && t.longitude) ? `<span class="text-[8px] font-mono text-slate-400"> ${t.latitude}, ${t.longitude}</span>` : ''}</div>${t.googleMaps ? `<a href="${t.googleMaps}" target="_blank" class="bg-white text-orange-600 hover:bg-orange-600 hover:text-white border border-orange-200 text-[10px] font-black py-1.5 px-4 rounded-full shadow-sm transition duration-300">BUKA MAPS</a>` : ''}</div></div>`;
-                    });
-                } catch(e) { box.innerHTML = '<p class="text-center text-sm text-red-500 py-6 font-bold">Gagal menghitung data jarak.</p>'; }
-            }, (error) => { box.innerHTML = `<p class="text-center text-sm text-red-500 py-4 font-bold bg-red-50 rounded-xl">Izin akses GPS ditolak.</p>`; showToast("Lacak GPS ditolak atau gagal.", "error"); }, { enableHighAccuracy: true });
-        }
-
-        let html5QrcodeScanner = null; let isCameraOpen = false;
-        function toggleScanner() {
-            const camArea = document.getElementById('cameraArea');
-            if(isCameraOpen) { if(html5QrcodeScanner) { html5QrcodeScanner.stop().then(() => { html5QrcodeScanner.clear(); html5QrcodeScanner = null; }); } camArea.classList.add('hidden'); isCameraOpen = false; } 
-            else { camArea.classList.remove('hidden'); html5QrcodeScanner = new Html5Qrcode("reader"); html5QrcodeScanner.start({ facingMode: "environment" }, { fps: 15, qrbox: { width: 250, height: 100 } }, (decodedText) => { document.getElementById('inputSearchProd').value = decodedText; toggleScanner(); doSearchProd(); }, (err) => { }).catch(err => { showToast("Izin kamera ditolak.", "error"); camArea.classList.add('hidden'); }); isCameraOpen = true; }
-        }
-
-        async function doSearchProd() {
-            const q = document.getElementById('inputSearchProd').value.trim().toLowerCase(); const grid = document.getElementById('resultGrid');
-            if(!q) return;
-            grid.innerHTML = '<div class="col-span-2 flex flex-col items-center justify-center py-10"><div class="w-10 h-10 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin mb-3"></div><p class="text-xs font-bold text-orange-600 animate-pulse">Mencari di Server Tertutup...</p></div>';
-            catatAktivitas('Pencarian Barang', q);
-            lastSearchQ = q; navTo(routePath('search', q), true);
-            try {
-                const res = await fetch(`/api/products/search?q=${encodeURIComponent(q)}`); const dataServer = await res.json(); const results = dataServer.data;
-                if(!results || results.length === 0) { grid.innerHTML = '<div class="col-span-2 text-center py-10 bg-slate-100 dark:bg-slate-800 rounded-2xl"><span class="text-3xl mb-2 block"></span><p class="text-sm font-bold text-slate-500">Item tidak ada di database inti.</p></div>'; return []; }
-                grid.innerHTML = '';
-                results.forEach(item => {
-                    const pluStr = String(item.plu).trim(); const imgUrl = `https://raw.githubusercontent.com/Marsudi505/katalog-klik/main/${pluStr}.jpg`; const namaAman = item.nama ? item.nama : "Nama Item Unknown";
-                    grid.innerHTML += `<div onclick='showDetailProduct(${JSON.stringify(item).replace(/'/g, "&#39;")})' class="bg-white dark:bg-[#1b1b1b] rounded-2xl shadow-lg border border-slate-100 dark:border-slate-700 cursor-pointer hover:border-orange-500 hover:shadow-orange-500/20 transition-all transform hover:-translate-y-1 overflow-hidden relative group"><div class="h-28 bg-slate-50 dark:bg-slate-800 flex justify-center items-center p-2 border-b border-slate-100 dark:border-slate-700"><img src="${imgUrl}" class="max-h-full max-w-full object-contain filter drop-shadow group-hover:scale-110 transition duration-300" onerror="this.src='https://via.placeholder.com/150?text=No+Img'"></div><div class="p-3 flex flex-col h-24"><h4 class="text-[11px] font-black leading-tight text-slate-700 dark:text-slate-200 mb-1 line-clamp-3">${namaAman}</h4><div class="mt-auto flex justify-between items-center"><p class="text-[9px] font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">PLU: ${pluStr}</p><span class="text-[10px] text-orange-500 font-black">Cek Rak →</span></div></div></div>`;
-                });
-                return results || [];
-            } catch (e) { grid.innerHTML = '<p class="col-span-2 text-center text-red-500 text-sm py-4 font-bold bg-red-50 rounded-xl">Gagal menyambung ke server.</p>'; return []; }
-        }
-
-        window.showDetailProduct = function(item, silent) {
-            const pluStr = String(item.plu).trim();
-            document.getElementById('modProdName').innerText = item.nama ? item.nama : "Nama Item Unknown";
-            document.getElementById('modProdPlu').innerText = pluStr;
-            document.getElementById('modProdImg').src = `https://raw.githubusercontent.com/Marsudi505/katalog-klik/main/${pluStr}.jpg`;
-            if(item.barcode && item.barcode !== "") { document.getElementById('modProdBarcodeTxt').innerText = item.barcode; document.getElementById('modProdBarcodeImg').src = `https://barcode.tec-it.com/barcode.ashx?data=${item.barcode}&code=Code128&translate-esc=on`; document.getElementById('modProdBarcodeImg').style.display = 'block'; } 
-            else { document.getElementById('modProdBarcodeTxt').innerText = "-"; document.getElementById('modProdBarcodeImg').style.display = 'none'; }
-            
-            let dRak = item.rakData || null;
-            document.getElementById('txtRak').innerText = dRak && dRak.rak && dRak.rak !== '-' ? dRak.rak : 'KOSONG';
-            document.getElementById('txtShelving').innerText = dRak && dRak.shelving ? dRak.shelving : '-';
-            document.getElementById('txtUrutan').innerText = dRak && dRak.urutan ? dRak.urutan : '-';
-            document.getElementById('txtRetur').innerText = (dRak && dRak.retur && dRak.retur !== '-') ? dRak.retur : 'Aman (Tidak Ada Info)';
-
-            document.getElementById('areaSearch').classList.add('hidden'); document.getElementById('areaDetail').classList.remove('hidden'); window.scrollTo(0, 0); catatAktivitas('Membuka Detail Rak Produk', pluStr);
-            if (!silent) navTo(routePath('search', lastSearchQ) + '/' + encodeURIComponent(pluStr), false);
-        }
-
-        window.closeDetail = function() { document.getElementById('areaDetail').classList.add('hidden'); document.getElementById('areaSearch').classList.remove('hidden'); navTo(routePath('search', lastSearchQ), true); }
-        
-        window.switchAdminTab = function(tab) {
-            const btnTx = document.getElementById('btnAdminTabTx'); const btnAct = document.getElementById('btnAdminTabAct'); const viewTx = document.getElementById('adminViewTx'); const viewAct = document.getElementById('adminViewAct');
-            const activeClass = "bg-orange-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm"; const inactiveClass = "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm transition border border-slate-200 dark:border-slate-700";
-            if(tab === 'transaksi') { viewTx.classList.remove('hidden'); viewAct.classList.add('hidden'); btnTx.className = activeClass; btnAct.className = inactiveClass; } 
-            else { viewAct.classList.remove('hidden'); viewTx.classList.add('hidden'); btnAct.className = activeClass; btnTx.className = inactiveClass; }
-        }
-
-        function renderMenuSwitches() {
-            const container = document.getElementById('adminMenuToggles');
-            const menusDef = [ { id: 'dashboard', name: ' Menu Checkout' }, { id: 'search', name: ' Menu Cari Barang' }, { id: 'toko', name: ' Menu Cari Toko' }, { id: 'generator', name: ' Menu QR/Barcode' }, { id: 'timestamp', name: ' Menu Timestamp' } ];
-            let html = '';
-            menusDef.forEach(m => {
-                let isChecked = globalMenus[m.id] !== false ? 'checked' : '';
-                html += `<div class="flex justify-between items-center bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-inner"><span class="text-xs font-bold text-slate-700 dark:text-slate-300">${m.name}</span><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" class="sr-only peer" ${isChecked} onchange="toggleGlobalMenu('${m.id}', this.checked)"><div class="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500 shadow-sm"></div></label></div>`;
-            });
-            container.innerHTML = html;
-        }
-
-        window.toggleGlobalMenu = async function(menuId, isEnabled) {
-            globalMenus[menuId] = isEnabled; 
-            try {
-                await fetch('/api/admin/settings', { method: 'POST', headers:{ ...authHeaders(), 'Content-Type':'application/json' }, body: JSON.stringify({ menu: menuId, state: isEnabled }) });
-                showToast(`Menu ${menuId} telah di-${isEnabled ? 'ON' : 'OFF'}-kan.`, isEnabled ? 'success' : 'warning');
-            } catch(e) { showToast("Gagal update setting menu", "error"); }
-        }
-
-        window.toggleUserRole = async function(usernameTarget, isAdmin) {
-            const newRole = isAdmin ? 'admin' : 'user';
-            try {
-                await fetch('/api/admin/users/role', { method: 'POST', headers:{ ...authHeaders(), 'Content-Type':'application/json' }, body: JSON.stringify({ username: usernameTarget, role: newRole }) });
-                showToast(`${usernameTarget.toUpperCase()} sekarang adalah ${newRole.toUpperCase()}.`, "success"); loadAdminData(); 
-            } catch(e) { showToast("Gagal merubah akses user", "error"); }
-        }
-
-        async function loadAdminData() { 
-            try { 
-                const res = await fetch('/api/admin/data', { headers: authHeaders() }); const data = await res.json(); 
-                if(data.settings && data.settings.menus) { globalMenus = data.settings.menus; renderMenuSwitches(); }
-
-                const uBody = document.getElementById('adminUserTable'); uBody.innerHTML = ''; 
-                if(data.users) { 
-                    data.users.forEach((u) => { 
-                        let roleBadge = u.role === 'owner' ? '<span class="text-amber-500"> OWNER</span>' : u.role === 'admin' ? '<span class="text-orange-500"> ADMIN</span>' : '<span class="text-slate-400"> USER</span>';
-                        let actionHtml = '';
-                        if(currentRole === 'owner' && u.username !== 'sudi') {
-                            let isCheckedAdmin = u.role === 'admin' ? 'checked' : '';
-                            actionHtml = `<div class="flex items-center space-x-2"><label class="relative inline-flex items-center cursor-pointer" title="Jadikan Admin"><input type="checkbox" class="sr-only peer" ${isCheckedAdmin} onchange="toggleUserRole('${u.username}', this.checked)"><div class="w-7 h-4 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-orange-600"></div></label><button onclick="adminDelUser('${u.username}')" class="text-red-500 bg-red-100 dark:bg-red-900/30 px-2 py-0.5 rounded text-[10px] font-black hover:bg-red-200 transition">DEL</button></div>`;
-                        } else if (currentRole === 'admin' && u.role === 'user') {
-                            actionHtml = `<button onclick="adminDelUser('${u.username}')" class="text-red-500 bg-red-100 dark:bg-red-900/30 px-2 py-0.5 rounded text-[10px] font-black hover:bg-red-200 transition">DEL</button>`;
-                        }
-                        let pwHtml = currentRole === 'owner'
-                            ? `<div class="flex items-center gap-1"><span class="font-mono text-slate-300">••••••</span><button onclick="adminRevealPw('${u.username}')" title="Lihat password" class="bg-slate-800 dark:bg-slate-700 hover:bg-orange-500 text-white px-1.5 py-0.5 rounded text-[9px] font-black transition">LIHAT</button>${u.username !== 'sudi' ? `<button onclick="adminResetPw('${u.username}')" title="Reset password" class="bg-amber-100 dark:bg-amber-900/30 text-amber-600 hover:bg-amber-200 border border-amber-200 dark:border-amber-800 px-1.5 py-0.5 rounded text-[9px] font-black transition">RESET</button>` : ''}</div>`
-                            : `<span class="font-mono text-slate-300">••••••</span>`;
-                        uBody.innerHTML += `<tr class="border-b border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition"><td class="py-2.5 font-bold">${u.username.toUpperCase()}</td><td class="text-slate-400 font-mono">${pwHtml}</td><td class="font-bold text-[9px]">${roleBadge}</td><td>${actionHtml}</td></tr>`; 
-                    }); 
-                }
-
-                const logsArray = Array.isArray(data.logs) ? data.logs : []; const actArray = Array.isArray(data.activityLogs) ? data.activityLogs : [];
-                const txLogs = [...logsArray].sort((a,b)=>b.timestamp-a.timestamp).slice(0, 200); const actLogs = [...actArray].sort((a,b)=>b.timestamp-a.timestamp).slice(0, 1000);
-
-                const lBody = document.getElementById('adminLogTable');
-                if (lBody) { lBody.innerHTML = ''; txLogs.forEach((l) => { const d = new Date(l.timestamp); const wkt = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear().toString().slice(-2)} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`; lBody.innerHTML += `<tr><td class="py-2 pl-2 text-[8px] text-slate-500 whitespace-nowrap">${wkt}</td><td class="font-bold text-emerald-600">${l.username}</td><td class="font-mono">${l.nomor}</td><td>${l.kodeToko}</td><td><button onclick='showModalLog(${JSON.stringify(l.result).replace(/'/g, "&#39;")})' class="bg-orange-500 hover:bg-orange-600 px-1.5 py-0.5 rounded text-white text-[9px] shadow-sm">Cek</button></td></tr>`; }); }
-
-                const aBody = document.getElementById('adminActTable');
-                if(aBody) { 
-                    aBody.innerHTML = ''; 
-                    actLogs.forEach((a) => { 
-                        const d = new Date(a.timestamp); 
-                        const wkt = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear().toString().slice(-2)} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`; 
-                        let detailStr = a.detail || ''; let extraBtn = ''; 
-                        if (detailStr.includes('Titik GPS:')) { let coords = detailStr.replace('Titik GPS:', '').trim(); extraBtn = `<br><a href="http://googleusercontent.com/maps.google.com/?q=${encodeURIComponent(coords)}" target="_blank" class="inline-block mt-1 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-800 px-2 py-0.5 rounded text-[9px] font-black hover:bg-orange-200 transition text-center shadow-sm"> BUKA MAPS</a>`; } 
-                        aBody.innerHTML += `<tr><td class="py-2 pl-2 text-[8px] text-slate-500 whitespace-nowrap">${wkt}</td><td class="font-bold text-orange-600">${a.username}</td><td class="text-[9px] font-bold text-slate-700 dark:text-slate-300">${a.action}</td><td class="font-mono text-slate-500 dark:text-slate-400 max-w-[120px] break-words">${detailStr}${extraBtn}</td></tr>`; 
-                    }); 
-                }
-
-                document.getElementById('statTotalTx').innerText = logsArray.length; document.getElementById('statTotalAct').innerText = actArray.length;
-                let userCounts = {}; logsArray.forEach(l => { if(l.username) userCounts[l.username] = (userCounts[l.username] || 0) + 1; }); actArray.forEach(a => { if(a.username) userCounts[a.username] = (userCounts[a.username] || 0) + 1; });
-                let topUser = "-"; let maxCount = 0; for(let u in userCounts) { if(userCounts[u] > maxCount) { maxCount = userCounts[u]; topUser = u; } }
-                document.getElementById('statTopUser').innerText = maxCount > 0 ? `${topUser.toUpperCase()} (${maxCount} Act)` : "-";
-            } catch (e) { console.error("Admin Load Error:", e); } 
-        }
-        
-        async function adminAddUser() { const u = document.getElementById('newUsername').value; const p = document.getElementById('newPassword').value; if(!u || !p) return showToast('Username dan Password wajib diisi!', 'warning'); await fetch('/api/admin/users', { method: 'POST', headers:{ ...authHeaders(), 'Content-Type':'application/json' }, body: JSON.stringify({username:u.toLowerCase(), password:p}) }); document.getElementById('newUsername').value = ''; document.getElementById('newPassword').value = ''; loadAdminData(); showToast(`User ${u.toUpperCase()} berhasil ditambahkan!`, 'success'); }
-        async function adminDelUser(u) { if(confirm(`Hapus user ${u}?`)) { await fetch('/api/admin/users/'+u, { method: 'DELETE', headers: authHeaders() }); loadAdminData(); showToast(`User ${u.toUpperCase()} dihapus.`, 'success'); } }
-
-        let currentGenMode = 'qr'; let currentGenQrType = 'url'; let customQrInstance = null; let lastEanCode = '';
-        function setGenMode(mode) {
-            currentGenMode = mode;
-            document.getElementById('panelGenQr').classList.toggle('hidden', mode !== 'qr');
-            document.getElementById('panelGenBar').classList.toggle('hidden', mode !== 'barcode');
-            document.getElementById('btnGenQr').classList.replace(mode === 'qr' ? 'tab-inactive' : 'tab-active', mode === 'qr' ? 'tab-active' : 'tab-inactive');
-            document.getElementById('btnGenBar').classList.replace(mode === 'barcode' ? 'tab-inactive' : 'tab-active', mode === 'barcode' ? 'tab-active' : 'tab-inactive');
-            document.getElementById('panelGenResult').classList.add('hidden'); 
-        }
-        function setGenQrType(type) {
-            currentGenQrType = type;
-            const btnUrl = document.getElementById('btnGenQrUrl'); const btnText = document.getElementById('btnGenQrText');
-            if(type === 'url') {
-                btnUrl.className = "px-4 py-2 text-xs font-bold rounded-lg bg-orange-100 text-orange-600 border border-orange-200 transition";
-                btnText.className = "px-4 py-2 text-xs font-bold rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700 transition";
-                document.getElementById('lblGenQr').innerText = "Masukkan URL"; document.getElementById('inputGenQr').placeholder = "https://example.com";
-            } else {
-                btnText.className = "px-4 py-2 text-xs font-bold rounded-lg bg-orange-100 text-orange-600 border border-orange-200 transition";
-                btnUrl.className = "px-4 py-2 text-xs font-bold rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700 transition";
-                document.getElementById('lblGenQr').innerText = "Masukkan Teks"; document.getElementById('inputGenQr').placeholder = "Ketik teks di sini...";
-            }
-            document.getElementById('inputGenQr').value = ''; document.getElementById('panelGenResult').classList.add('hidden');
-        }
-        function actionGenerateQR() {
-            let content = document.getElementById('inputGenQr').value.trim();
-            if (!content) return showToast("Teks / URL tidak boleh kosong!", "warning");
-            if (currentGenQrType === 'url' && !/^https?:\/\//i.test(content)) content = 'https://' + content;
-            document.getElementById('panelGenResult').classList.remove('hidden');
-            document.getElementById('outGenQrWrapper').classList.remove('hidden');
-            document.getElementById('outGenBarWrapper').classList.add('hidden');
-            document.getElementById('panelGenResult').classList.add('fade-in-up');
-            const box = document.getElementById('outGenQrBox'); box.innerHTML = '';
-            if (customQrInstance) { try { customQrInstance.clear(); } catch(e){} }
-            customQrInstance = new QRCode(box, { text: content, width: 220, height: 220, colorDark: '#0d0d0d', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H });
-            document.getElementById('outGenQrText').innerText = currentGenQrType === 'url' ? ` ${content}` : ` "${content}"`;
-            const btnUrl = document.getElementById('btnGenQrUrl'); const btnCopy = document.getElementById('btnGenQrCopy');
-            if (currentGenQrType === 'url') { btnCopy.classList.add('hidden'); btnUrl.classList.remove('hidden'); btnUrl.href = content; } 
-            else { btnUrl.classList.add('hidden'); btnCopy.classList.remove('hidden'); }
-            catatAktivitas('Membuat QR Code', currentGenQrType);
-        }
-        function downloadQR() {
-            const box = document.getElementById('outGenQrBox');
-            const img = box.querySelector('img'); const canvas = box.querySelector('canvas'); const a = document.createElement('a');
-            if (canvas) { a.href = canvas.toDataURL('image/png'); } else if (img) { a.href = img.src; } else return;
-            a.download = 'klikauto-qr.png'; a.click(); showToast("QR Code berhasil diunduh!", "success");
-        }
-        function copyQrContent() { navigator.clipboard.writeText(document.getElementById('inputGenQr').value.trim()).then(() => showToast("Teks QR berhasil disalin!", "success")); }
-        const EAN13_L = ['0001101','0011001','0010011','0111101','0100011','0110001','0101111','0111011','0110111','0001011'];
-        const EAN13_G = ['0100111','0110011','0011011','0100001','0011101','0111001','0000101','0010001','0001001','0010111'];
-        const EAN13_R = ['1110010','1100110','1101100','1000010','1011100','1001110','1010000','1000100','1001000','1110100'];
-        const PARITY  = ['LLLLLL','LLGLGG','LLGGLG','LLGGGL','LGLLGG','LGGLLG','LGGGLL','LGLGLG','LGLGGL','LGGLGL'];
-        function calcEAN13(raw) {
-            const digits = raw.replace(/\D/g,'').slice(0,12).padStart(12,'0'); const arr = digits.split('').map(Number);
-            const sum = arr.reduce((acc,d,i) => acc + d * (i%2===0?1:3), 0); return digits + ((10 - (sum%10))%10);
-        }
-        function encodeEAN13(code) {
-            const d = code.split('').map(Number); const parity = PARITY[d[0]]; let bars = '101';
-            for (let i=0;i<6;i++) bars += parity[i]==='L' ? EAN13_L[d[i+1]] : EAN13_G[d[i+1]];
-            bars += '01010'; for (let i=7;i<13;i++) bars += EAN13_R[d[i]]; bars += '101'; return bars;
-        }
-        function actionGenerateBarcode() {
-            const raw = document.getElementById('inputGenBar').value.replace(/\D/g,'');
-            if (!raw) return showToast("Masukkan angka untuk membuat barcode!", "warning");
-            const code = calcEAN13(raw); lastEanCode = code; const bars = encodeEAN13(code);
-            document.getElementById('panelGenResult').classList.remove('hidden');
-            document.getElementById('outGenQrWrapper').classList.add('hidden');
-            document.getElementById('outGenBarWrapper').classList.remove('hidden');
-            document.getElementById('panelGenResult').classList.add('fade-in-up');
-            const canvas = document.getElementById('outGenBarCanvas');
-            const bw = 3, bh = 100, fs = 14; const totalW = bars.length * bw + 20;
-            canvas.width = totalW; canvas.height = bh + fs + 12;
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,canvas.width,canvas.height);
-            ctx.fillStyle = '#0d0d0d'; const sx = 10;
-            for (let i=0;i<bars.length;i++) { if (bars[i]==='1') ctx.fillRect(sx + i*bw, 0, bw, bh); }
-            ctx.font = `bold ${fs}px monospace`; ctx.textAlign = 'center';
-            ctx.fillText(code[0], sx-6, bh+fs); ctx.fillText(code.slice(1,7), sx + 21*bw + 14, bh+fs); ctx.fillText(code.slice(7), sx + (21+5+42)*bw + 20, bh+fs);
-            document.getElementById('outGenBarText').innerText = code;
-            catatAktivitas('Membuat Barcode EAN-13', code);
-        }
-        function downloadBarcode() {
-            const canvas = document.getElementById('outGenBarCanvas'); const a = document.createElement('a');
-            a.href = canvas.toDataURL('image/png'); a.download = 'barcode-ean13-' + lastEanCode + '.png';
-            a.click(); showToast("Barcode EAN-13 diunduh!", "success");
-        }
-        function copyBarcode() { navigator.clipboard.writeText(lastEanCode).then(() => showToast(`Kode EAN disalin: ${lastEanCode}`, "success")); }
-
-        // ==========================================
-        // FUNGSI LOGIKA TIMESTAMP PRO
-        // ==========================================
-        let tsOriginalImage = null;
-        let tsMapInstance = null;
-        let tsMarker = null;
-
-        // FIX BUG: Ikon marker Leaflet yang rusak saat pakai CDN
-        delete L.Icon.Default.prototype._getIconUrl;
-        L.Icon.Default.mergeOptions({
-            iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-            iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-            shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-        });
-
-        function initTimestampApp() {
-            // Set waktu sekarang ke input datetime-local
-            const now = new Date();
-            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-            document.getElementById('tsTime').value = now.toISOString().slice(0,16);
-
-            if (tsMapInstance) { 
-                return; 
-            }
-
-            // Inisialisasi Peta Leaflet (Default: Surabaya)
-            tsMapInstance = L.map('tsMap', { zoomControl: true }).setView([-7.265, 112.723], 16);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(tsMapInstance);
-
-            tsMarker = L.marker([-7.265, 112.723], { draggable: true }).addTo(tsMapInstance);
-            
-            tsMarker.on('dragend', updateTsLocationInputs);
-            tsMapInstance.on('click', (e) => {
-                tsMarker.setLatLng(e.latlng);
-                updateTsLocationInputs();
-            });
-            
-            updateTsLocationInputs();
-        }
-
-        function getTsCurrentLocation() {
-            const btn = document.getElementById('btnTsGPS');
-            if (navigator.geolocation) {
-                btn.textContent = " MENCARI LOKASI...";
-                navigator.geolocation.getCurrentPosition((position) => {
-                    const lat = position.coords.latitude; 
-                    const lng = position.coords.longitude;
-                    const newLatLng = new L.LatLng(lat, lng);
-                    
-                    tsMapInstance.setView(newLatLng, 17);
-                    tsMarker.setLatLng(newLatLng);
-                    updateTsLocationInputs();
-                    
-                    btn.textContent = " GUNAKAN GPS LOKASI SAYA";
-                    showToast("Lokasi berhasil ditemukan!", "success");
-                    catatAktivitas('Gunakan GPS (Timestamp)', `Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`);
-                }, (error) => {
-                    showToast("Gagal mendapatkan lokasi GPS.", "error");
-                    btn.textContent = " GUNAKAN GPS LOKASI SAYA";
-                }, { enableHighAccuracy: true });
-            } else {
-                showToast("Browser Anda tidak mendukung fitur GPS.", "error");
-            }
-        }
-
-        async function updateTsLocationInputs() {
-            const latlng = tsMarker.getLatLng();
-            document.getElementById('tsAddress').value = "Mengambil alamat...";
-            try {
-                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latlng.lat}&lon=${latlng.lng}&format=json&accept-language=id-ID,id`);
-                const data = await res.json();
-                if (data && data.display_name) {
-                    const addressParts = data.display_name.split(',').map(item => item.trim());
-                    document.getElementById('tsAddress').value = addressParts.join('\n');
-                } else {
-                    document.getElementById('tsAddress').value = "Alamat tidak ditemukan.";
-                }
-            } catch (e) { 
-                document.getElementById('tsAddress').value = "Gagal mengambil alamat. Silakan ketik manual.";
-            }
-        }
-
-        function handleTsUpload(input) {
-            if (!input.files || !input.files[0]) return;
-            document.getElementById('tsUploadText').innerText = "GANTI FOTO";
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                tsOriginalImage = new Image();
-                tsOriginalImage.onload = function() {
-                    const canvas = document.getElementById('tsOriginalCanvas');
-                    canvas.width = tsOriginalImage.width;
-                    canvas.height = tsOriginalImage.height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(tsOriginalImage, 0, 0);
-                    
-                    document.getElementById('tsPreviewArea').classList.remove('hidden');
-                    document.getElementById('tsPreviewArea').classList.add('flex');
-                    
-                    setTimeout(() => { if(tsMapInstance) tsMapInstance.invalidateSize(); }, 500); 
-                };
-                tsOriginalImage.src = e.target.result;
-            };
-            reader.readAsDataURL(input.files[0]);
-        }
-
-        function formatTsDateTimeText(isoString) {
-            if (!isoString) return "";
-            const d = new Date(isoString);
-            const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
-            const day = d.getDate().toString().padStart(2, '0');
-            const month = months[d.getMonth()];
-            const year = d.getFullYear();
-            const hours = d.getHours().toString().padStart(2, '0');
-            const mins = d.getMinutes().toString().padStart(2, '0');
-            const secs = Math.floor(Math.random() * 60).toString().padStart(2, '0'); 
-            // Format waktu dipisah dengan titik (00.51.30)
-            return `${day} ${month} ${year} ${hours}.${mins}.${secs}`;
-        }
-
-        function generateTsImage() {
-            if (!tsOriginalImage) return;
-            const btn = document.getElementById('btnTsDownload');
-            btn.textContent = "MEMPROSES...";
-            btn.disabled = true;
-
-            const finalCanvas = document.getElementById('tsOutputCanvas');
-            const ctx = finalCanvas.getContext('2d');
-            const tWidth = tsOriginalImage.width;
-            const tHeight = tsOriginalImage.height;
-            finalCanvas.width = tWidth;
-            finalCanvas.height = tHeight;
-
-            ctx.drawImage(tsOriginalImage, 0, 0);
-
-            const rawTime = document.getElementById('tsTime').value;
-            const addressText = document.getElementById('tsAddress').value;
-            
-            let texts = [formatTsDateTimeText(rawTime)];
-            if(addressText.trim() !== "") {
-                const addressLines = addressText.split('\n');
-                texts = texts.concat(addressLines);
-            }
-
-            // --- SETTING FONT & STROKE AGAR PERSIS SEPERTI GAMBAR TARGET ---
-            // Ukuran font dibuat sedikit lebih presisi
-            const fontSize = Math.max(Math.floor(tHeight * 0.021), 20); 
-            const padding = Math.floor(tWidth * 0.025); 
-
-            // Text Baseline dibuat 'bottom' agar perhitungan garis bawah lebih akurat
-            ctx.textAlign = "right";
-            ctx.textBaseline = "bottom"; 
-            
-            // Gunakan font weight 400 (normal) dan sans-serif bawaan sistem agar terlihat natural
-            ctx.font = `400 ${fontSize}px sans-serif`;
-            
-            // Pengaturan Garis Tepi (Stroke) Hitam yang tegas
-            ctx.strokeStyle = 'rgba(0, 0, 0, 0.7)';
-            ctx.lineWidth = Math.max(tHeight * 0.0025, 1.5);
-            ctx.lineJoin = 'round'; // Agar sudut garis halus
-            
-            // Pengaturan Isi (Fill) Putih
-            ctx.fillStyle = "#FFFFFF";
-
-            const lineHeight = fontSize * 1.25; 
-            
-            // Hitung posisi Y awal (mulai dari baris paling atas agar berurut ke bawah)
-            // Karena baseline 'bottom', baris terakhir akan tepat berada di (tHeight - padding)
-            let textY = tHeight - padding - ((texts.length - 1) * lineHeight);
-
-            texts.forEach(text => {
-                const textX = tWidth - padding;
-                
-                // 1. Gambar Garis Tepi Hitam (tanpa shadow agar bersih)
-                ctx.shadowColor = 'transparent';
-                ctx.strokeText(text.trim(), textX, textY);
-                
-                // 2. Gambar Teks Putih (dengan sedikit shadow super tipis agar nge-blend)
-                ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
-                ctx.shadowBlur = 2;
-                ctx.shadowOffsetX = 1;
-                ctx.shadowOffsetY = 1;
-                ctx.fillText(text.trim(), textX, textY);
-                
-                // Turun ke baris berikutnya
-                textY += lineHeight;
-            });
-
-            btn.textContent = " GENERATE & DOWNLOAD";
-            btn.disabled = false;
-            document.getElementById('tsOutputArea').style.display = 'block';
-
-            catatAktivitas('Buat Timestamp Foto', 'Berhasil download foto stempel GPS');
-
-            const link = document.getElementById('tsDownloadLink');
-            link.href = finalCanvas.toDataURL('image/jpeg', 0.95);
-            link.download = `INDCHUB_STAMP_${Date.now()}.jpg`;
-            link.click();
-            
-            showToast('Foto berhasil didownload ke Galeri Anda!', 'success');
-        }
-    </script>
-    
-    <script type='text/javascript' src='//pl29128213.profitablecpmratenetwork.com/a4/a5/f7/a4a5f77d0a93f0f45df6539a6950ab91.js'></script>
-
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js').catch(() => {});
-            });
-        }
-    </script>
+    <!-- Script App Logic -->
+    <script src="/main.js"></script>
 </body>
 </html>
